@@ -1,3 +1,7 @@
+import json
+from types import SimpleNamespace
+
+from morning_digest.ai import OpenAIProcessor
 from morning_digest.domain import Article, ProcessingResult, ReadingPriority, Recommendation, Summary
 from morning_digest.digest import HtmlDigestBuilder
 from morning_digest.persistence import JsonStore
@@ -34,3 +38,26 @@ def test_html_is_sorted_and_escaped():
     digest = HtmlDigestBuilder().build([result(priority=2), result("https://example.com/b", 5)])
     assert digest.results[0].recommendation.reading_priority == 5
     assert "A &lt;title&gt;" in digest.html_content
+
+
+def test_openai_schema_restricts_digest_tags_to_taxonomy():
+    class Responses:
+        def __init__(self):
+            self.arguments = None
+
+        def create(self, **kwargs):
+            self.arguments = kwargs
+            return SimpleNamespace(output_text=json.dumps({
+                "summary": "要約です。", "reading_priority": 3,
+                "reason_to_read": "読む理由です。", "digest_tags": ["Python"],
+            }))
+
+    responses = Responses()
+    client = SimpleNamespace(responses=responses)
+    taxonomy = Taxonomy({"Python", "Uncategorized"}, "Uncategorized")
+    processor = OpenAIProcessor("test-model", taxonomy, client=client)
+    processor.process(Article("title", "https://example.com", "Medium", content="body"))
+
+    tag_schema = responses.arguments["text"]["format"]["schema"]["properties"]["digest_tags"]
+    assert tag_schema["items"]["enum"] == ["Python", "Uncategorized"]
+    assert tag_schema["maxItems"] == 3

@@ -34,7 +34,12 @@ class OpenAIProcessor:
                         "summary": {"type": "string"},
                         "reading_priority": {"type": "integer", "minimum": 1, "maximum": 5},
                         "reason_to_read": {"type": "string"},
-                        "digest_tags": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+                        "digest_tags": {
+                            "type": "array",
+                            "items": {"type": "string", "enum": sorted(self.taxonomy.tags)},
+                            "minItems": 1,
+                            "maxItems": 3,
+                        },
                     }, "required": ["summary", "reading_priority", "reason_to_read", "digest_tags"]}}},
         )
         data = json.loads(response.output_text)
