@@ -1,0 +1,24 @@
+version: 1
+fallback: Uncategorized
+
+categories:
+  AI:
+    tags: [AI, LLM, Machine Learning, Generative AI, AI Agents, RAG]
+  Programming:
+    tags: [Python, Elixir, Erlang, Gleam, Rust, Go, JavaScript, TypeScript]
+  Web:
+    tags: [Web Development, Phoenix, LiveView, Frontend, Backend, API]
+  Data:
+    tags: [Data Engineering, Database, Analytics, Polars, Pandas]
+  Infrastructure:
+    tags: [Cloud, Cloudflare, AWS, Azure, GCP, DevOps, Containers]
+  Systems:
+    tags: [Linux, Operating Systems, Networking]
+  Security:
+    tags: [Security, Vulnerability, Authentication, Privacy]
+  Software Engineering:
+    tags: [Architecture, Testing, Developer Tools, Git, GitHub, Open Source]
+  Business:
+    tags: [Business, Startups, Product]
+  Other:
+    tags: [Uncategorized]

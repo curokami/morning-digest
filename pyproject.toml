@@ -1,0 +1,29 @@
+[project]
+name = "morning-digest"
+version = "0.1.0"
+description = "Personal article triage and reading-priority digest"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "beautifulsoup4>=4.12",
+  "feedparser>=6.0",
+  "openai>=1.50",
+  "PyYAML>=6.0",
+]
+
+[project.scripts]
+morning-digest = "morning_digest.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/morning_digest"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

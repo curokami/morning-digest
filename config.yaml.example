@@ -1,0 +1,49 @@
+# Copy to config.yaml. Never store secrets here.
+app:
+  timezone: "Asia/Tokyo"
+  language: "ja"
+  max_articles_per_digest: 10
+
+sources:
+  medium:
+    enabled: true
+    feeds:
+      - "https://medium.com/feed/@example"
+
+ai:
+  provider: "openai"
+  model: "REPLACE_WITH_MODEL_NAME"
+  summary:
+    min_sentences: 3
+    max_sentences: 5
+  reading_priority:
+    weights:
+      relevance: 0.40
+      novelty: 0.20
+      impact: 0.20
+      actionability: 0.20
+
+taxonomy:
+  path: "data/taxonomy.yaml"
+  fallback_tag: "Uncategorized"
+  max_tags_per_article: 3
+
+persistence:
+  backend: "json"
+  path: "data/processed_articles.json"
+
+digest:
+  format: "html"
+  sort_by: "reading_priority"
+  sort_order: "descending"
+
+delivery:
+  provider: "gmail"
+  sender:
+    name: "Morning Digest"
+  subject:
+    prefix: "Morning Digest"
+
+logging:
+  level: "INFO"
+  path: "logs/morning-digest.log"

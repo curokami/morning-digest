@@ -1,0 +1,50 @@
+from morning_digest.domain import Article, DeliveryResult, ProcessingResult, ReadingPriority, Recommendation, Summary
+from morning_digest.digest import HtmlDigestBuilder
+from morning_digest.persistence import JsonStore
+from morning_digest.pipeline import Pipeline
+
+
+class Collector:
+    def collect(self, feeds):
+        return [Article("ok", "https://e/ok", "Medium"), Article("bad", "https://e/bad", "Medium")]
+
+class Enricher:
+    def enrich(self, article): return article
+
+class Processor:
+    def process(self, article):
+        if article.title == "bad": raise RuntimeError("boom")
+        return ProcessingResult(article, "success", Summary("ja", "要約"),
+            Recommendation(ReadingPriority.WORTH_READING, "理由", ("Python",)))
+
+class Delivery:
+    def __init__(self, statuses=None):
+        self.calls = 0
+        self.statuses = list(statuses or ["success"])
+    def send(self, digest, subject_prefix):
+        self.calls += 1
+        status = self.statuses.pop(0) if self.statuses else "success"
+        return DeliveryResult(status, error="temporary" if status == "failed" else None)
+
+def test_pipeline_isolates_failure_and_deduplicates(tmp_path):
+    delivery = Delivery()
+    pipeline = Pipeline(Collector(), Enricher(), Processor(), JsonStore(tmp_path / "state.json"), HtmlDigestBuilder(), delivery)
+    first = pipeline.run(["feed"])
+    second = pipeline.run(["feed"])
+    assert first == {"candidates": 2, "succeeded": 1, "delivery": "success"}
+    assert second["candidates"] == 1
+    assert delivery.calls == 1
+
+
+def test_delivery_retry_reuses_persisted_ai_result(tmp_path):
+    delivery = Delivery(["failed", "success"])
+    store = JsonStore(tmp_path / "state.json")
+    pipeline = Pipeline(Collector(), Enricher(), Processor(), store, HtmlDigestBuilder(), delivery)
+    first = pipeline.run(["feed"])
+    assert first["delivery"] == "failed"
+    assert len(store.pending_results()) == 1
+    second = pipeline.run(["feed"])
+    assert second["succeeded"] == 0
+    assert second["delivery"] == "success"
+    assert delivery.calls == 2
+    assert store.pending_results() == []
