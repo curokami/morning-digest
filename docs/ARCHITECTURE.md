@@ -36,9 +36,10 @@ Implements logical Summarizer and Recommendation Engine responsibilities. It rec
 
 ### Persistence Store
 Stores successful processing results and relevant failures in JSON. It supports duplicate detection and prevents repeated AI processing when only Delivery fails.
+It counts access-denied retrieval failures per canonical URL and keeps separate pending queues for successful results and one-time exhausted-retrieval notices.
 
 ### Digest Builder
-Orders successful results by Reading Priority and renders HTML. It SHALL NOT perform AI inference.
+Orders successful results by Reading Priority and renders HTML. It also renders exhausted retrievals in a separate section using cautious Japanese cause labels. It SHALL NOT perform AI inference.
 
 ### Delivery
 Sends a completed Digest through Gmail and returns a DeliveryResult.
@@ -58,8 +59,8 @@ For each candidate Article:
 When the Article limit is lower than the candidate count, higher feed preference weights are processed first. AI processing receives the weight as user-preference context; it remains responsible for judging the Article itself.
 
 After all Articles:
-7. if none succeeded, finish without empty email;
-8. otherwise build one HTML Digest;
+7. load pending successes and newly exhausted retrieval notices;
+8. if both are empty, finish without email; otherwise build one HTML Digest;
 9. deliver through Gmail;
 10. record DeliveryResult.
 
@@ -102,7 +103,7 @@ morning-digest/
 `pipeline.py` orchestrates stages but does not implement their internals.
 
 ## 7. Error Flow
-Article-level retrieval, enrichment, AI, taxonomy-validation, and persistence failures SHALL be logged and isolated. Failed Articles are excluded from the current Digest.
+Article-level retrieval, enrichment, AI, taxonomy-validation, and persistence failures SHALL be logged and isolated. Access denials are retried across three runs per canonical URL. The third failure is persisted as exhausted, reported once in the Digest, and excluded from later processing limits. Other failed Articles are excluded from the current Digest.
 
 Invalid required Configuration, unreadable Taxonomy, or inability to initialize Persistence MAY terminate startup.
 

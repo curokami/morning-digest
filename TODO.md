@@ -34,6 +34,7 @@
 
 ## 6. Enrichment
 - [ ] Retrieve sufficient article body and isolate per-Article failures.
+- [x] Classify access denials cautiously and exhaust retries after three failures per URL.
 
 ## 7. OpenAI Processing
 - [ ] Implement `docs/PROMPTS.md`.
@@ -44,6 +45,7 @@
 ## 8. Digest Builder
 - [ ] Sort by Reading Priority and render safe mobile-readable HTML.
 - [ ] Include all required fields/original links; do not invoke AI.
+- [x] Report newly exhausted retrievals once with user-facing Japanese cause labels.
 
 ## 9. Gmail Delivery
 - [ ] Send one Digest when at least one Article succeeds.

@@ -15,30 +15,50 @@ class JsonStore:
 
     def _load(self) -> dict:
         if not self.path.exists():
-            return {"articles": {}, "pending_delivery": []}
+            return {"articles": {}, "pending_delivery": [], "pending_failure_notifications": []}
         with self.path.open(encoding="utf-8") as stream:
             data = json.load(stream)
         data.setdefault("articles", {})
         data.setdefault("pending_delivery", [])
+        data.setdefault("pending_failure_notifications", [])
         return data
 
     def is_successful(self, canonical_url: str) -> bool:
         return self.data["articles"].get(canonical_url, {}).get("status") == "success"
+
+    def should_process(self, canonical_url: str) -> bool:
+        status = self.data["articles"].get(canonical_url, {}).get("status")
+        return status not in {"success", "retrieval_exhausted"}
+
+    def failure_attempt_count(self, canonical_url: str) -> int:
+        record = self.data["articles"].get(canonical_url, {})
+        if "attempt_count" in record:
+            return int(record["attempt_count"])
+        return 1 if record.get("status") in {"failed", "retry_pending", "retrieval_exhausted"} else 0
 
     def save_result(self, result: ProcessingResult) -> None:
         record = self._serialize(result)
         self.data["articles"][result.article.canonical_url] = record
         if result.status == "success" and result.article.canonical_url not in self.data["pending_delivery"]:
             self.data["pending_delivery"].append(result.article.canonical_url)
+        if (result.status == "retrieval_exhausted"
+                and result.article.canonical_url not in self.data["pending_failure_notifications"]):
+            self.data["pending_failure_notifications"].append(result.article.canonical_url)
         self._flush()
 
     def pending_results(self) -> list[ProcessingResult]:
         return [self._deserialize(self.data["articles"][url])
                 for url in self.data["pending_delivery"] if url in self.data["articles"]]
 
+    def pending_failure_results(self) -> list[ProcessingResult]:
+        return [self._deserialize(self.data["articles"][url])
+                for url in self.data["pending_failure_notifications"] if url in self.data["articles"]]
+
     def mark_delivered(self, urls: list[str]) -> None:
         delivered = set(urls)
         self.data["pending_delivery"] = [url for url in self.data["pending_delivery"] if url not in delivered]
+        self.data["pending_failure_notifications"] = [
+            url for url in self.data["pending_failure_notifications"] if url not in delivered]
         self._flush()
 
     def _flush(self) -> None:
@@ -57,6 +77,7 @@ class JsonStore:
     def _serialize(result: ProcessingResult) -> dict:
         article = result.article
         record = {"status": result.status, "processed_at": result.processed_at, "error": result.error,
+            "error_classification": result.error_classification, "attempt_count": result.attempt_count,
             "article": {"title": article.title, "canonical_url": article.canonical_url,
                 "source": article.source, "author": article.author, "publication_date": article.publication_date,
                 "source_tags": list(article.source_tags), "content": article.content,
@@ -77,6 +98,8 @@ class JsonStore:
         summary_data = record.get("summary")
         recommendation_data = record.get("recommendation")
         return ProcessingResult(article=article, status=record["status"], error=record.get("error"),
+            error_classification=record.get("error_classification"),
+            attempt_count=int(record.get("attempt_count", 0)),
             processed_at=record["processed_at"],
             summary=Summary(**summary_data) if summary_data else None,
             recommendation=Recommendation(

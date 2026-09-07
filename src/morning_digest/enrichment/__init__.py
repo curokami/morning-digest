@@ -1,3 +1,3 @@
-from .web import ArticleEnricher
+from .web import ArticleAccessError, ArticleEnricher
 
-__all__ = ["ArticleEnricher"]
+__all__ = ["ArticleAccessError", "ArticleEnricher"]

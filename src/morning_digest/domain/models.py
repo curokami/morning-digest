@@ -58,6 +58,8 @@ class ProcessingResult:
     summary: Summary | None = None
     recommendation: Recommendation | None = None
     error: str | None = None
+    error_classification: str | None = None
+    attempt_count: int = 0
     processed_at: str = field(default_factory=lambda: datetime.now().astimezone().isoformat())
 
 
@@ -66,6 +68,7 @@ class Digest:
     execution_date: str
     results: tuple[ProcessingResult, ...]
     html_content: str
+    failed_results: tuple[ProcessingResult, ...] = ()
 
 
 @dataclass(frozen=True)

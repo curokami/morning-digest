@@ -71,6 +71,7 @@ Previously successfully processed Articles SHALL NOT be reprocessed. Canonical U
 
 ### FR-003 Retrieval and Enrichment
 The system SHALL obtain sufficient article content for meaningful analysis. Failure of one Article SHALL NOT terminate unrelated Articles.
+Access-denied retrieval failures SHALL be counted by canonical URL. After three failed runs, the Article SHALL be marked `retrieval_exhausted`, excluded from subsequent processing limits, and reported once in the Digest with its cautious cause classification.
 
 ### FR-004 Metadata
 Available author, publication date, canonical URL, and Source Tags SHOULD be preserved.
@@ -94,7 +95,7 @@ Reason to Read SHOULD normally be one or two Japanese sentences.
 A Digest entry SHALL contain title, Source, Summary, Reading Priority, Reason to Read, Digest Tags, and original URL. The Digest SHALL be HTML and SHOULD be mobile-readable.
 
 ### FR-011 Delivery
-When at least one new Article is successfully processed, exactly one Digest email SHALL be sent through Gmail. If no new Article succeeds, the system SHALL NOT send an empty Digest; the run MAY still be successful. Delivery failure SHALL be logged and SHALL NOT require repeating successful AI processing.
+When at least one new Article is successfully processed, exactly one Digest email SHALL be sent through Gmail. A newly exhausted retrieval MAY also trigger a Digest containing the failed Article notice. If neither exists, the system SHALL NOT send an empty Digest; the run MAY still be successful. Delivery failure SHALL be logged and SHALL NOT require repeating successful AI processing.
 
 ### FR-012 Configuration
 Runtime application behavior SHALL be configured through `config.yaml`; secrets SHALL NOT be stored there. Scheduling is not application configuration.
@@ -150,8 +151,8 @@ New Sources SHOULD be addable through new Collectors without changing the Recomm
 Article: title, canonical_url, source, author?, publication_date?, source_tags, content.
 Summary: language, text.
 Recommendation: reading_priority, digest_tags, reason_to_read.
-ProcessingResult: Article, Summary?, Recommendation?, status, error?.
-Digest: execution_date, successful results, html_content.
+ProcessingResult: Article, Summary?, Recommendation?, status, error?, error_classification?, attempt_count.
+Digest: execution_date, successful results, exhausted retrieval results, html_content.
 DeliveryResult: status, provider metadata/error.
 Configuration: loaded from config.yaml, including optional per-feed preference weights.
 Taxonomy: loaded from data/taxonomy.yaml.

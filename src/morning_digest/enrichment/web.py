@@ -10,6 +10,13 @@ from morning_digest.domain import Article
 class ArticleAccessError(RuntimeError):
     """Retrieval failure with a cautious, evidence-based classification."""
 
+    def __init__(self, message: str, classification: str, status: int,
+                 evidence: tuple[str, ...] = ()) -> None:
+        super().__init__(message)
+        self.classification = classification
+        self.status = status
+        self.evidence = evidence
+
 
 class ArticleEnricher:
     def enrich(self, article: Article) -> Article:
@@ -26,7 +33,8 @@ class ArticleEnricher:
             details = ",".join(evidence) if evidence else "none"
             raise ArticleAccessError(
                 f"Article retrieval denied: status={exc.code} "
-                f"classification={classification} evidence={details}"
+                f"classification={classification} evidence={details}",
+                classification=classification, status=exc.code, evidence=evidence,
             ) from exc
         content = self._text(html)
         if len(content) < 200:

@@ -71,6 +71,19 @@ def test_html_is_sorted_and_escaped():
     assert "A &lt;title&gt;" in digest.html_content
 
 
+def test_html_renders_adopted_failure_labels():
+    failures = [ProcessingResult(
+        Article(f"blocked-{classification}", f"https://example.com/{index}", "Medium"),
+        "retrieval_exhausted", error_classification=classification, attempt_count=3,
+    ) for index, classification in enumerate((
+        "bot_protection_suspected", "authentication_required", "forbidden_unknown"))]
+    html = HtmlDigestBuilder().build([], failed_results=failures).html_content
+    assert "取得できなかった記事" in html
+    assert "取得不能（ボット判定の疑い）" in html
+    assert "取得不能（認証が必要な可能性）" in html
+    assert "取得不能（原因不明のアクセス拒否）" in html
+
+
 def test_openai_schema_restricts_digest_tags_to_taxonomy():
     class Responses:
         def __init__(self):

@@ -1,5 +1,6 @@
 from morning_digest.domain import Article, DeliveryResult, ProcessingResult, ReadingPriority, Recommendation, Summary
 from morning_digest.digest import HtmlDigestBuilder
+from morning_digest.enrichment import ArticleAccessError
 from morning_digest.persistence import JsonStore
 from morning_digest.pipeline import Pipeline
 
@@ -70,3 +71,28 @@ def test_pipeline_selects_higher_weight_before_article_limit(tmp_path):
         JsonStore(tmp_path / "state.json"), HtmlDigestBuilder(), Delivery())
     pipeline.run(["feed"], max_articles=1)
     assert processor.titles == ["favorite"]
+
+
+def test_access_denial_is_retried_three_times_then_reported_and_excluded(tmp_path):
+    class OneArticleCollector:
+        def collect(self, feeds):
+            return [Article("blocked", "https://e/blocked", "Medium")]
+
+    class BlockedEnricher:
+        def enrich(self, article):
+            raise ArticleAccessError(
+                "denied", "bot_protection_suspected", 403, ("body:captcha",))
+
+    store = JsonStore(tmp_path / "state.json")
+    delivery = Delivery()
+    pipeline = Pipeline(OneArticleCollector(), BlockedEnricher(), Processor(), store,
+                        HtmlDigestBuilder(), delivery)
+
+    assert pipeline.run(["feed"])["delivery"] == "skipped"
+    assert pipeline.run(["feed"])["delivery"] == "skipped"
+    assert pipeline.run(["feed"])["delivery"] == "success"
+    assert delivery.calls == 1
+    assert store.data["articles"]["https://e/blocked"]["status"] == "retrieval_exhausted"
+    assert store.data["articles"]["https://e/blocked"]["attempt_count"] == 3
+    assert pipeline.run(["feed"])["candidates"] == 0
+    assert delivery.calls == 1
