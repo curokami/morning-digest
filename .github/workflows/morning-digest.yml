@@ -1,8 +1,6 @@
 name: Morning Digest
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "40 22 * * *" # 07:40 JST (previous UTC day)
 
 concurrency:
   group: morning-digest

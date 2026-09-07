@@ -62,8 +62,10 @@
 - [ ] Text logs for start/finish, counts, failures, delivery; stack traces for unexpected failures; redact secrets.
 
 ## 12. GitHub Actions
-- [ ] Add scheduled workflow targeting approximately 07:40 JST.
+- [x] Add GitHub Actions workflow (production scheduling later superseded by ADR 0015).
 - [ ] Install with uv, inject GitHub Secrets, support `workflow_dispatch`.
+- [x] Disable hosted-runner delivery schedule while retaining manual diagnostics.
+- [ ] Configure an external local macOS schedule for production delivery.
 
 ## 13. Acceptance
 - [ ] Verify every acceptance criterion in `docs/SPEC.md`.

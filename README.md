@@ -59,8 +59,9 @@ uv run morning-digest --config config.yaml
 
 ## GitHub Actions
 
-The workflow runs automatically at approximately 07:40 JST and can also be
-started manually from the repository's **Actions** tab. Add these repository
+The workflow is available for manual diagnostics from the repository's
+**Actions** tab. Scheduled delivery is intentionally disabled because direct
+Medium retrieval can be denied from GitHub-hosted runners. Add these repository
 secrets under **Settings → Secrets and variables → Actions**:
 
 - `OPENAI_API_KEY`
@@ -74,8 +75,7 @@ of Git history. The workflow recreates `config.yaml` only inside the temporary
 Actions runner. It stops with a named error if any required secret is missing.
 
 After adding all five secrets, open **Actions → Morning Digest → Run workflow**
-for the first test run. GitHub's schedule uses UTC, so `40 22 * * *` corresponds
-to 07:40 JST on the following day.
+for a manual diagnostic run.
 
 ## Core idea
 

@@ -8,7 +8,7 @@ The keywords SHALL, SHOULD, and MAY are normative.
 Morning Digest is a single-user application that reduces information triage. It discovers new articles, summarizes their content, and recommends whether the original is worth reading.
 
 ## 2. MVP Scope
-Version 1 SHALL use Medium RSS as its only Source, OpenAI as its only AI provider, Gmail as its only Delivery mechanism, GitHub Actions for scheduling, and JSON for persistence.
+Version 1 SHALL use Medium RSS as its only Source, OpenAI as its only AI provider, Gmail as its only Delivery mechanism, external scheduling, and JSON for persistence. GitHub Actions SHALL remain available for manual diagnostics.
 
 The application SHALL support Python 3.11 or later; Python 3.13 SHOULD be the reference runtime. uv and mise SHALL be used for project/development environment management.
 
@@ -116,7 +116,7 @@ Article-level failure SHALL NOT terminate other Article processing. Only unrecov
 Version 1 SHALL use OpenAI only. Summary and Recommendation are logically separate responsibilities, but the implementation SHOULD obtain summary, priority, reason, and tags in one AI request per Article when practical.
 
 ### FR-018 Scheduling
-GitHub Actions SHALL schedule production execution. The application SHALL NOT implement an internal scheduler. The target schedule is approximately 07:40 JST.
+The application SHALL NOT implement an internal scheduler. GitHub Actions SHALL support manual diagnostic execution but SHALL NOT schedule production delivery while Medium denies article enrichment from GitHub-hosted runners. The target production schedule remains approximately 07:40 JST using an external local scheduler.
 
 ### FR-020 Source Preference Weight
 Each configured feed MAY define a positive preference weight; omitted weights SHALL default to 1.0. Higher-weight Articles SHALL be selected before lower-weight Articles when a run exceeds its Article limit. The weight SHALL be supplied to AI processing as reader-preference context, but SHALL NOT dictate a Reading Priority by itself.
@@ -159,7 +159,7 @@ Taxonomy: loaded from data/taxonomy.yaml.
 
 ## 8. Acceptance Criteria
 Version 1 is accepted when:
-- scheduled GitHub Actions execution works;
+- manual GitHub Actions diagnostic execution works;
 - Medium RSS collection and duplicate detection work;
 - each successful Article receives Summary and Recommendation;
 - Reading Priority, Reason to Read, controlled Digest Tags, and `Uncategorized` fallback work;

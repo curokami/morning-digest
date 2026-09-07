@@ -110,9 +110,9 @@ Invalid required Configuration, unreadable Taxonomy, or inability to initialize 
 Delivery failure SHALL preserve already persisted successful processing results so Delivery can be retried without another AI request.
 
 ## 8. Deployment
-Version 1 runs as a scheduled GitHub Actions workflow. Python 3.11+ is supported; 3.13 is recommended. uv manages Python project/dependencies; mise manages the development runtime.
+Version 1 supports manual diagnostic runs in GitHub Actions. Production delivery runs locally because Medium article enrichment may reject GitHub-hosted runner traffic; local scheduling remains external to the application. Python 3.11+ is supported; 3.13 is recommended. uv manages Python project/dependencies; mise manages the development runtime.
 
-Secrets come from GitHub Secrets/environment variables. Scheduling belongs to the workflow, not `config.yaml`. Target execution is approximately 07:40 JST.
+Secrets come from GitHub Secrets/environment variables. Scheduling does not belong in `config.yaml`. Target production execution is approximately 07:40 JST.
 
 ## 9. Constraints
 Version 1 intentionally has Medium RSS only, OpenAI only, Gmail only, JSON persistence, a single user, no database, no Web UI, manually reviewed Taxonomy, and no internal scheduler.
