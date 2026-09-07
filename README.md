@@ -57,6 +57,26 @@ cp config.yaml.example config.yaml
 uv run morning-digest --config config.yaml
 ```
 
+## GitHub Actions
+
+The workflow runs automatically at approximately 07:40 JST and can also be
+started manually from the repository's **Actions** tab. Add these repository
+secrets under **Settings → Secrets and variables → Actions**:
+
+- `OPENAI_API_KEY`
+- `GMAIL_USERNAME`
+- `GMAIL_APP_PASSWORD`
+- `GMAIL_RECIPIENT`
+- `MORNING_DIGEST_CONFIG` — the complete contents of your local `config.yaml`
+
+`MORNING_DIGEST_CONFIG` keeps the real writer list and preference weights out
+of Git history. The workflow recreates `config.yaml` only inside the temporary
+Actions runner. It stops with a named error if any required secret is missing.
+
+After adding all five secrets, open **Actions → Morning Digest → Run workflow**
+for the first test run. GitHub's schedule uses UTC, so `40 22 * * *` corresponds
+to 07:40 JST on the following day.
+
 ## Core idea
 
 Morning Digest does not ask “Is this a good article?” It asks “Is this article worth this reader's time right now?”
