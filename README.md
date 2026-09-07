@@ -60,3 +60,8 @@ uv run morning-digest --config config.yaml
 ## Core idea
 
 Morning Digest does not ask “Is this a good article?” It asks “Is this article worth this reader's time right now?”
+
+When article retrieval is denied, logs distinguish evidence-backed
+`bot_protection_suspected`, `authentication_required`, and
+`forbidden_unknown` classifications. A suspicion is diagnostic evidence, not
+proof of the remote service's internal decision.

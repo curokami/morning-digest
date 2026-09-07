@@ -5,6 +5,7 @@ from morning_digest.ai import OpenAIProcessor
 from morning_digest.collectors import MediumCollector
 from morning_digest.domain import Article, ProcessingResult, ReadingPriority, Recommendation, Summary
 from morning_digest.digest import HtmlDigestBuilder
+from morning_digest.enrichment import ArticleEnricher
 from morning_digest.persistence import JsonStore
 from morning_digest.taxonomy import Taxonomy
 
@@ -30,6 +31,28 @@ def test_medium_feed_settings_support_weighted_and_legacy_forms():
         "https://medium.com/feed/@writer", 1.0)
     assert MediumCollector._feed_settings({"url": "https://medium.com/feed/@favorite", "weight": 2}) == (
         "https://medium.com/feed/@favorite", 2.0)
+
+
+def test_denial_classification_requires_challenge_evidence_for_bot_suspicion():
+    classification, evidence = ArticleEnricher.classify_denial(
+        403, {"Server": "cloudflare", "CF-Ray": "abc"},
+        "Complete this captcha on the challenge-platform",
+    )
+    assert classification == "bot_protection_suspected"
+    assert "body:captcha" in evidence
+
+    classification, evidence = ArticleEnricher.classify_denial(
+        403, {"Server": "cloudflare", "CF-Ray": "abc"}, "Forbidden",
+    )
+    assert classification == "forbidden_unknown"
+    assert evidence == ("server:cloudflare", "header:cf-ray")
+
+
+def test_denial_classification_identifies_authentication_signal():
+    classification, _ = ArticleEnricher.classify_denial(
+        403, {"Server": "cloudflare"}, "This is a member-only story. Sign in to continue.",
+    )
+    assert classification == "authentication_required"
 
 
 def test_json_store_roundtrip_and_delivery_queue(tmp_path):
