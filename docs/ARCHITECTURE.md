@@ -26,7 +26,7 @@ Pipeline stages SHALL NOT rely on uncontrolled destructive mutation of inputs; t
 ## 3. Components
 
 ### Collector
-Retrieves Medium RSS, normalizes entries into Articles, preserves available metadata, and coordinates duplicate filtering.
+Retrieves Medium RSS, normalizes entries into Articles, preserves available metadata and configured preference weight, and coordinates duplicate filtering.
 
 ### Enricher
 Retrieves sufficient article content and normalizes metadata.
@@ -54,6 +54,8 @@ For each candidate Article:
 4. validate structured output;
 5. validate Digest Tags;
 6. persist the successful ProcessingResult.
+
+When the Article limit is lower than the candidate count, higher feed preference weights are processed first. AI processing receives the weight as user-preference context; it remains responsible for judging the Article itself.
 
 After all Articles:
 7. if none succeeded, finish without empty email;

@@ -9,6 +9,9 @@ sources:
     enabled: true
     feeds:
       - "https://medium.com/feed/@example"
+      # Weighted feeds are selected first. Default weight is 1.0.
+      - url: "https://medium.com/feed/@favorite_writer"
+        weight: 2.0
 
 ai:
   provider: "openai"

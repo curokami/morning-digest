@@ -2,6 +2,7 @@ import json
 from types import SimpleNamespace
 
 from morning_digest.ai import OpenAIProcessor
+from morning_digest.collectors import MediumCollector
 from morning_digest.domain import Article, ProcessingResult, ReadingPriority, Recommendation, Summary
 from morning_digest.digest import HtmlDigestBuilder
 from morning_digest.persistence import JsonStore
@@ -22,6 +23,13 @@ def test_taxonomy_rejects_unknown_and_falls_back():
         assert False
     except ValueError:
         pass
+
+
+def test_medium_feed_settings_support_weighted_and_legacy_forms():
+    assert MediumCollector._feed_settings("https://medium.com/feed/@writer") == (
+        "https://medium.com/feed/@writer", 1.0)
+    assert MediumCollector._feed_settings({"url": "https://medium.com/feed/@favorite", "weight": 2}) == (
+        "https://medium.com/feed/@favorite", 2.0)
 
 
 def test_json_store_roundtrip_and_delivery_queue(tmp_path):
@@ -61,3 +69,4 @@ def test_openai_schema_restricts_digest_tags_to_taxonomy():
     tag_schema = responses.arguments["text"]["format"]["schema"]["properties"]["digest_tags"]
     assert tag_schema["items"]["enum"] == ["Python", "Uncategorized"]
     assert tag_schema["maxItems"] == 3
+    assert json.loads(responses.arguments["input"])["writer_preference_weight"] == 1.0

@@ -59,7 +59,8 @@ class JsonStore:
         record = {"status": result.status, "processed_at": result.processed_at, "error": result.error,
             "article": {"title": article.title, "canonical_url": article.canonical_url,
                 "source": article.source, "author": article.author, "publication_date": article.publication_date,
-                "source_tags": list(article.source_tags), "content": article.content}}
+                "source_tags": list(article.source_tags), "content": article.content,
+                "preference_weight": article.preference_weight}}
         if result.summary:
             record["summary"] = {"language": result.summary.language, "text": result.summary.text}
         if result.recommendation:

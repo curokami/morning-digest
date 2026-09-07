@@ -48,3 +48,25 @@ def test_delivery_retry_reuses_persisted_ai_result(tmp_path):
     assert second["delivery"] == "success"
     assert delivery.calls == 2
     assert store.pending_results() == []
+
+
+def test_pipeline_selects_higher_weight_before_article_limit(tmp_path):
+    class WeightedCollector:
+        def collect(self, feeds):
+            return [
+                Article("normal", "https://e/normal", "Medium", preference_weight=1.0),
+                Article("favorite", "https://e/favorite", "Medium", preference_weight=2.0),
+            ]
+
+    class TrackingProcessor(Processor):
+        def __init__(self): self.titles = []
+
+        def process(self, article):
+            self.titles.append(article.title)
+            return super().process(article)
+
+    processor = TrackingProcessor()
+    pipeline = Pipeline(WeightedCollector(), Enricher(), processor,
+        JsonStore(tmp_path / "state.json"), HtmlDigestBuilder(), Delivery())
+    pipeline.run(["feed"], max_articles=1)
+    assert processor.titles == ["favorite"]

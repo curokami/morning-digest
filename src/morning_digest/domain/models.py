@@ -27,6 +27,11 @@ class Article:
     publication_date: str | None = None
     source_tags: tuple[str, ...] = ()
     content: str = ""
+    preference_weight: float = 1.0
+
+    def __post_init__(self) -> None:
+        if self.preference_weight <= 0:
+            raise ValueError("Article preference weight must be greater than zero")
 
 
 @dataclass(frozen=True)

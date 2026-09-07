@@ -11,9 +11,10 @@ class Pipeline:
         self.store, self.builder, self.delivery = store, builder, delivery
         self.logger = logger or logging.getLogger(__name__)
 
-    def run(self, feeds: list[str], max_articles: int = 10, subject_prefix: str = "Morning Digest") -> dict:
+    def run(self, feeds: list[str | dict], max_articles: int = 10, subject_prefix: str = "Morning Digest") -> dict:
         self.logger.info("Morning Digest run started")
-        articles = [a for a in self.collector.collect(feeds) if not self.store.is_successful(a.canonical_url)][:max_articles]
+        candidates = [a for a in self.collector.collect(feeds) if not self.store.is_successful(a.canonical_url)]
+        articles = sorted(candidates, key=lambda article: article.preference_weight, reverse=True)[:max_articles]
         succeeded = 0
         for article in articles:
             try:

@@ -117,6 +117,9 @@ Version 1 SHALL use OpenAI only. Summary and Recommendation are logically separa
 ### FR-018 Scheduling
 GitHub Actions SHALL schedule production execution. The application SHALL NOT implement an internal scheduler. The target schedule is approximately 07:40 JST.
 
+### FR-020 Source Preference Weight
+Each configured feed MAY define a positive preference weight; omitted weights SHALL default to 1.0. Higher-weight Articles SHALL be selected before lower-weight Articles when a run exceeds its Article limit. The weight SHALL be supplied to AI processing as reader-preference context, but SHALL NOT dictate a Reading Priority by itself.
+
 ### FR-019 Completion
 A run with successfully processed new Articles SHALL produce persisted results, one HTML Digest, one delivery attempt, and operational logs.
 
@@ -150,7 +153,7 @@ Recommendation: reading_priority, digest_tags, reason_to_read.
 ProcessingResult: Article, Summary?, Recommendation?, status, error?.
 Digest: execution_date, successful results, html_content.
 DeliveryResult: status, provider metadata/error.
-Configuration: loaded from config.yaml.
+Configuration: loaded from config.yaml, including optional per-feed preference weights.
 Taxonomy: loaded from data/taxonomy.yaml.
 
 ## 8. Acceptance Criteria
