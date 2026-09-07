@@ -34,6 +34,7 @@
 
 ## 6. Enrichment
 - [ ] Retrieve sufficient article body and isolate per-Article failures.
+- [x] Prefer sufficient RSS content and fetch the original page only as fallback.
 - [x] Classify access denials cautiously and exhaust retries after three failures per URL.
 
 ## 7. OpenAI Processing

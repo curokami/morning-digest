@@ -19,9 +19,11 @@ class ArticleAccessError(RuntimeError):
 
 
 class ArticleEnricher:
+    MINIMUM_CONTENT_LENGTH = 200
+
     def enrich(self, article: Article) -> Article:
         content = self._text(article.content)
-        if len(content) >= 500:
+        if len(content) >= self.MINIMUM_CONTENT_LENGTH:
             return replace(article, content=content)
         request = Request(article.canonical_url, headers={"User-Agent": "MorningDigest/0.1"})
         try:
@@ -37,7 +39,7 @@ class ArticleEnricher:
                 classification=classification, status=exc.code, evidence=evidence,
             ) from exc
         content = self._text(html)
-        if len(content) < 200:
+        if len(content) < self.MINIMUM_CONTENT_LENGTH:
             raise ValueError("Article body is too short for meaningful analysis")
         return replace(article, content=content)
 

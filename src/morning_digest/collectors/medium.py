@@ -29,10 +29,22 @@ class MediumCollector:
                     title=title.strip(), canonical_url=url.split("?")[0], source="Medium",
                     author=entry.get("author"), publication_date=entry.get("published"),
                     source_tags=tags,
-                    content=entry.get("content", [{}])[0].get("value", ""),
+                    content=self._entry_content(entry),
                     preference_weight=weight,
                 ))
         return list({article.canonical_url: article for article in articles}.values())
+
+    @staticmethod
+    def _entry_content(entry) -> str:
+        """Return the richest body supplied by RSS without assuming one feed shape."""
+        candidates = [
+            item.get("value", "")
+            for item in entry.get("content", [])
+            if isinstance(item, dict)
+        ]
+        candidates.extend((entry.get("summary", ""), entry.get("description", "")))
+        return max((value for value in candidates if isinstance(value, str)),
+                   key=len, default="")
 
     @staticmethod
     def _feed_settings(feed: str | dict) -> tuple[str, float]:

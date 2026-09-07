@@ -1,5 +1,6 @@
 import json
 from types import SimpleNamespace
+from unittest.mock import patch
 
 from morning_digest.ai import OpenAIProcessor
 from morning_digest.collectors import MediumCollector
@@ -31,6 +32,25 @@ def test_medium_feed_settings_support_weighted_and_legacy_forms():
         "https://medium.com/feed/@writer", 1.0)
     assert MediumCollector._feed_settings({"url": "https://medium.com/feed/@favorite", "weight": 2}) == (
         "https://medium.com/feed/@favorite", 2.0)
+
+
+def test_medium_feed_content_uses_richest_available_rss_body():
+    entry = {
+        "content": [{"value": "short"}],
+        "summary": "summary body is longer",
+        "description": "description",
+    }
+    assert MediumCollector._entry_content(entry) == "summary body is longer"
+
+
+def test_enricher_uses_meaningful_rss_content_without_web_request():
+    rss_html = "<p>" + ("RSSから取得した本文です。" * 25) + "</p>"
+    article = Article("title", "https://example.com/article", "Medium", content=rss_html)
+    with patch("morning_digest.enrichment.web.urlopen") as urlopen:
+        enriched = ArticleEnricher().enrich(article)
+    urlopen.assert_not_called()
+    assert "<p>" not in enriched.content
+    assert len(enriched.content) >= ArticleEnricher.MINIMUM_CONTENT_LENGTH
 
 
 def test_denial_classification_requires_challenge_evidence_for_bot_suspicion():

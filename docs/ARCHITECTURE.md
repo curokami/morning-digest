@@ -26,10 +26,10 @@ Pipeline stages SHALL NOT rely on uncontrolled destructive mutation of inputs; t
 ## 3. Components
 
 ### Collector
-Retrieves Medium RSS, normalizes entries into Articles, preserves available metadata and configured preference weight, and coordinates duplicate filtering.
+Retrieves Medium RSS, normalizes entries into Articles, preserves the richest available RSS body, metadata, and configured preference weight, and coordinates duplicate filtering.
 
 ### Enricher
-Retrieves sufficient article content and normalizes metadata.
+Uses a sufficient RSS body directly. Only when RSS content is missing or too short does it retrieve the original page and normalize its content.
 
 ### AI Processing
 Implements logical Summarizer and Recommendation Engine responsibilities. It receives Article content plus Taxonomy and returns validated Summary, Reading Priority, Reason to Read, and Digest Tags.

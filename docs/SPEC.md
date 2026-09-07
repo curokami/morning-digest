@@ -70,7 +70,7 @@ The system SHALL retrieve all configured Medium RSS feeds and support one or mor
 Previously successfully processed Articles SHALL NOT be reprocessed. Canonical URL SHALL be the Version 1 duplicate key.
 
 ### FR-003 Retrieval and Enrichment
-The system SHALL obtain sufficient article content for meaningful analysis. Failure of one Article SHALL NOT terminate unrelated Articles.
+The system SHALL obtain sufficient article content for meaningful analysis. Content embedded in RSS SHALL be used without requesting the original page when it is sufficient; the original page SHALL be an enrichment fallback for short or missing RSS content. Failure of one Article SHALL NOT terminate unrelated Articles.
 Access-denied retrieval failures SHALL be counted by canonical URL. After three failed runs, the Article SHALL be marked `retrieval_exhausted`, excluded from subsequent processing limits, and reported once in the Digest with its cautious cause classification.
 
 ### FR-004 Metadata
