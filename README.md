@@ -55,11 +55,15 @@ On macOS, credentials can be stored once in Keychain. Each command prompts
 twice without displaying or recording the value in shell history:
 
 ```bash
-security add-generic-password -U -a morning-digest -s OPENAI_API_KEY -w
+read -r -s "md_key?OpenAI API key: "; echo; security add-generic-password -U -a morning-digest -s OPENAI_API_KEY -w "$md_key"; unset md_key
 security add-generic-password -U -a morning-digest -s GMAIL_USERNAME -w
 security add-generic-password -U -a morning-digest -s GMAIL_APP_PASSWORD -w
 security add-generic-password -U -a morning-digest -s GMAIL_RECIPIENT -w
 ```
+
+The `read` form is required for the long OpenAI project key; the interactive
+password prompt of `security ... -w` may truncate it. The command itself, but
+not the entered key, is retained in shell history.
 
 Environment variables take precedence when present. Otherwise, the app reads
 the matching service from the `morning-digest` Keychain account.
@@ -90,6 +94,23 @@ Actions runner. It stops with a named error if any required secret is missing.
 
 After adding all five secrets, open **Actions → Morning Digest → Run workflow**
 for a manual diagnostic run.
+
+## Local scheduling on macOS
+
+Production delivery uses a per-user LaunchAgent at approximately 07:40 local
+time. The installed plist is based on
+`launchd/com.curokami.morning-digest.plist.example`, with absolute local paths
+substituted for `UV_EXECUTABLE` and `PROJECT_DIRECTORY`. Runtime credentials are
+read from the macOS Keychain; no credentials belong in the plist.
+
+The installed job can be inspected with:
+
+```bash
+launchctl print gui/$(id -u)/com.curokami.morning-digest
+```
+
+Its launcher output is written to `logs/launchd.stdout.log` and
+`logs/launchd.stderr.log`; application logs remain in the configured log file.
 
 ## Core idea
 

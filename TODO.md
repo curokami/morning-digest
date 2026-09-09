@@ -66,7 +66,7 @@
 - [x] Add GitHub Actions workflow (production scheduling later superseded by ADR 0015).
 - [ ] Install with uv, inject GitHub Secrets, support `workflow_dispatch`.
 - [x] Disable hosted-runner delivery schedule while retaining manual diagnostics.
-- [ ] Configure an external local macOS schedule for production delivery.
+- [x] Configure an external local macOS LaunchAgent for production delivery.
 
 ## 13. Acceptance
 - [ ] Verify every acceptance criterion in `docs/SPEC.md`.

@@ -110,7 +110,7 @@ Invalid required Configuration, unreadable Taxonomy, or inability to initialize 
 Delivery failure SHALL preserve already persisted successful processing results so Delivery can be retried without another AI request.
 
 ## 8. Deployment
-Version 1 supports manual diagnostic runs in GitHub Actions. Production delivery runs locally because Medium article enrichment may reject GitHub-hosted runner traffic; local scheduling remains external to the application. Python 3.11+ is supported; 3.13 is recommended. uv manages Python project/dependencies; mise manages the development runtime.
+Version 1 supports manual diagnostic runs in GitHub Actions. Production delivery runs locally because Medium article enrichment may reject GitHub-hosted runner traffic. A per-user macOS LaunchAgent invokes the CLI at approximately 07:40 local time, keeping scheduling external to the application. Python 3.11+ is supported; 3.13 is recommended. uv manages Python project/dependencies; mise manages the development runtime.
 
 Secrets come from GitHub Secrets/environment variables or, for local macOS execution, Keychain fallback. Environment variables take precedence. Scheduling does not belong in `config.yaml`. Target production execution is approximately 07:40 JST.
 

@@ -18,3 +18,5 @@ names. Other platforms continue to require environment variables.
 Local credentials survive terminal sessions and can support future unattended
 execution without entering Git history. The application depends on the macOS
 `security` command for fallback, and Keychain may request user authorization.
+Long OpenAI project keys must be collected without the `security -w` interactive
+prompt, which can truncate long input, and then supplied as the command value.

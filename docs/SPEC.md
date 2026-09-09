@@ -116,7 +116,7 @@ Article-level failure SHALL NOT terminate other Article processing. Only unrecov
 Version 1 SHALL use OpenAI only. Summary and Recommendation are logically separate responsibilities, but the implementation SHOULD obtain summary, priority, reason, and tags in one AI request per Article when practical.
 
 ### FR-018 Scheduling
-The application SHALL NOT implement an internal scheduler. GitHub Actions SHALL support manual diagnostic execution but SHALL NOT schedule production delivery while Medium denies article enrichment from GitHub-hosted runners. The target production schedule remains approximately 07:40 JST using an external local scheduler.
+The application SHALL NOT implement an internal scheduler. GitHub Actions SHALL support manual diagnostic execution but SHALL NOT schedule production delivery while Medium denies article enrichment from GitHub-hosted runners. On macOS, production delivery SHALL use a per-user LaunchAgent targeting approximately 07:40 local time and credentials from Keychain or environment variables.
 
 ### FR-020 Source Preference Weight
 Each configured feed MAY define a positive preference weight; omitted weights SHALL default to 1.0. Higher-weight Articles SHALL be selected before lower-weight Articles when a run exceeds its Article limit. The weight SHALL be supplied to AI processing as reader-preference context, but SHALL NOT dictate a Reading Priority by itself.
