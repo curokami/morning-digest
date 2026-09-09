@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import argparse
 import logging
-import os
 
 from morning_digest.ai import OpenAIProcessor
 from morning_digest.collectors import MediumCollector
 from morning_digest.config import load_config
+from morning_digest.credentials import load_credentials
 from morning_digest.delivery import GmailDelivery
 from morning_digest.digest import HtmlDigestBuilder
 from morning_digest.enrichment import ArticleEnricher
@@ -29,15 +29,14 @@ def main() -> int:
     taxonomy_config = config.section("taxonomy")
     taxonomy = Taxonomy.load(config.path(taxonomy_config["path"]))
     delivery_config = config.section("delivery")
-    required_env = ("OPENAI_API_KEY", "GMAIL_USERNAME", "GMAIL_APP_PASSWORD", "GMAIL_RECIPIENT")
-    missing = [name for name in required_env if not os.getenv(name)]
-    if missing:
-        raise RuntimeError(f"Missing required environment variables: {', '.join(missing)}")
+    credentials = load_credentials(
+        ("OPENAI_API_KEY", "GMAIL_USERNAME", "GMAIL_APP_PASSWORD", "GMAIL_RECIPIENT"))
     pipeline = Pipeline(MediumCollector(), ArticleEnricher(),
         OpenAIProcessor(config.section("ai")["model"], taxonomy),
         JsonStore(config.path(config.section("persistence")["path"])), HtmlDigestBuilder(),
-        GmailDelivery(os.environ["GMAIL_USERNAME"], os.environ["GMAIL_APP_PASSWORD"],
-            os.environ["GMAIL_RECIPIENT"], delivery_config.get("sender", {}).get("name", "Morning Digest")))
+        GmailDelivery(credentials["GMAIL_USERNAME"], credentials["GMAIL_APP_PASSWORD"],
+            credentials["GMAIL_RECIPIENT"],
+            delivery_config.get("sender", {}).get("name", "Morning Digest")))
     source = config.section("sources").get("medium", {})
     result = pipeline.run(source.get("feeds", []), config.section("app").get("max_articles_per_digest", 10),
         delivery_config.get("subject", {}).get("prefix", "Morning Digest"))

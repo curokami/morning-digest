@@ -16,6 +16,7 @@
 ## 2. Configuration
 - [ ] Parse/validate `config.yaml`.
 - [ ] Load secrets from environment variables; never log them.
+- [x] Fall back to macOS Keychain for persistent local credentials.
 
 ## 3. Taxonomy
 - [ ] Load/validate `data/taxonomy.yaml`.

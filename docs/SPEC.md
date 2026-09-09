@@ -139,7 +139,7 @@ Domain logic SHALL remain separate from infrastructure concerns. Configuration S
 Logs SHALL provide enough information to diagnose collection, AI, persistence, and delivery failures.
 
 ### NFR-005 Security
-Secrets SHALL NOT be committed. API credentials SHALL be supplied by environment variables or GitHub Secrets.
+Secrets SHALL NOT be committed. Credentials SHALL be supplied by environment variables, GitHub Secrets, or the macOS Keychain for local execution. Environment variables SHALL take precedence over Keychain values.
 
 ### NFR-006 Portability
 Python 3.11+ SHALL be supported; Python 3.13 SHOULD be the reference runtime.

@@ -41,14 +41,28 @@ uv sync
 uv run pytest
 ```
 
-Copy `config.yaml.example` to `config.yaml`. Secrets must come from environment variables or GitHub Secrets.
+Copy `config.yaml.example` to `config.yaml`. Secrets must come from environment
+variables, the macOS Keychain, or GitHub Secrets.
 
-Required environment variables:
+Required credential names:
 
 - `OPENAI_API_KEY`
 - `GMAIL_USERNAME` — Gmail address used to send the digest
 - `GMAIL_APP_PASSWORD` — Google app password (not the account password)
 - `GMAIL_RECIPIENT` — destination email address
+
+On macOS, credentials can be stored once in Keychain. Each command prompts
+twice without displaying or recording the value in shell history:
+
+```bash
+security add-generic-password -U -a morning-digest -s OPENAI_API_KEY -w
+security add-generic-password -U -a morning-digest -s GMAIL_USERNAME -w
+security add-generic-password -U -a morning-digest -s GMAIL_APP_PASSWORD -w
+security add-generic-password -U -a morning-digest -s GMAIL_RECIPIENT -w
+```
+
+Environment variables take precedence when present. Otherwise, the app reads
+the matching service from the `morning-digest` Keychain account.
 
 Run locally with:
 
