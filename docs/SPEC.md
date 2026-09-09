@@ -119,7 +119,7 @@ Version 1 SHALL use OpenAI only. Summary and Recommendation are logically separa
 The application SHALL NOT implement an internal scheduler. GitHub Actions SHALL support manual diagnostic execution but SHALL NOT schedule production delivery while Medium denies article enrichment from GitHub-hosted runners. On macOS, production delivery SHALL use a per-user LaunchAgent targeting approximately 07:40 local time and credentials from Keychain or environment variables.
 
 ### FR-020 Source Preference Weight
-Each configured feed MAY define a positive preference weight; omitted weights SHALL default to 1.0. Higher-weight Articles SHALL be selected before lower-weight Articles when a run exceeds its Article limit. The weight SHALL be supplied to AI processing as reader-preference context, but SHALL NOT dictate a Reading Priority by itself.
+Each configured feed MAY define a positive preference weight; omitted weights SHALL default to 1.0. Configuration MAY also define positive tag-weight rules that apply only when every required Source Tag is present. Matching tag multipliers SHALL be combined with the feed weight. Higher-weight Articles SHALL be selected before lower-weight Articles when a run exceeds its Article limit. The resulting weight SHALL be supplied to AI processing as reader-preference context, but SHALL NOT dictate a Reading Priority by itself.
 
 ### FR-019 Completion
 A run with successfully processed new Articles SHALL produce persisted results, one HTML Digest, one delivery attempt, and operational logs.

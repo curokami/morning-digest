@@ -31,13 +31,13 @@ def main() -> int:
     delivery_config = config.section("delivery")
     credentials = load_credentials(
         ("OPENAI_API_KEY", "GMAIL_USERNAME", "GMAIL_APP_PASSWORD", "GMAIL_RECIPIENT"))
-    pipeline = Pipeline(MediumCollector(), ArticleEnricher(),
+    source = config.section("sources").get("medium", {})
+    pipeline = Pipeline(MediumCollector(source.get("tag_weight_rules", [])), ArticleEnricher(),
         OpenAIProcessor(config.section("ai")["model"], taxonomy),
         JsonStore(config.path(config.section("persistence")["path"])), HtmlDigestBuilder(),
         GmailDelivery(credentials["GMAIL_USERNAME"], credentials["GMAIL_APP_PASSWORD"],
             credentials["GMAIL_RECIPIENT"],
             delivery_config.get("sender", {}).get("name", "Morning Digest")))
-    source = config.section("sources").get("medium", {})
     result = pipeline.run(source.get("feeds", []), config.section("app").get("max_articles_per_digest", 10),
         delivery_config.get("subject", {}).get("prefix", "Morning Digest"))
     return 1 if result["delivery"] == "failed" else 0

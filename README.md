@@ -75,6 +75,19 @@ cp config.yaml.example config.yaml
 uv run morning-digest --config config.yaml
 ```
 
+## Extraction experiment
+
+To compare the current HTML text extraction with Trafilatura without changing
+the production pipeline:
+
+```bash
+uv run --with trafilatura python scripts/compare_extractors.py "ARTICLE_URL"
+```
+
+The page is downloaded once and passed to both extractors. The command reports
+only byte counts, character counts, and timing; it does not print or save the
+article text.
+
 ## GitHub Actions
 
 The workflow is available for manual diagnostics from the repository's

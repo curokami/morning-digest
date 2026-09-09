@@ -21,13 +21,13 @@ class OpenAIProcessor:
                 "あなたは個人向け記事選別アシスタントです。人気ではなく、今読む価値を判断してください。"
                 "要約は日本語3〜5文、読む理由は日本語1〜2文。優先度は関連性40%、新規性20%、"
                 "影響度20%、実行可能性20%で1〜5。タグは指定候補だけを使い、該当なしはUncategorized。"
-                "writer_preference_weightは読者の書き手への関心度で、1.0が通常、1.0超は高関心です。"
+                "preference_weightは読者の書き手や記事タグへの関心度で、1.0が通常、1.0超は高関心です。"
                 "関連性判断の文脈に使いますが、それだけで優先度を決めないでください。"
             ),
             input=json.dumps({
                 "title": article.title, "author": article.author,
                 "publication_date": article.publication_date,
-                "writer_preference_weight": article.preference_weight,
+                "preference_weight": article.preference_weight,
                 "source_tags": article.source_tags, "content": article.content[:30000],
                 "controlled_tags": sorted(self.taxonomy.tags),
             }, ensure_ascii=False),

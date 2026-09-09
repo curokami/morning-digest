@@ -43,6 +43,12 @@ def test_medium_feed_content_uses_richest_available_rss_body():
     assert MediumCollector._entry_content(entry) == "summary body is longer"
 
 
+def test_medium_tag_weight_requires_all_tags_and_ignores_case():
+    collector = MediumCollector([{"all": ["Elixir", "Programming"], "weight": 2.0}])
+    assert collector._tag_weight(("elixir", "PROGRAMMING", "Technology")) == 2.0
+    assert collector._tag_weight(("Elixir",)) == 1.0
+
+
 def test_enricher_uses_meaningful_rss_content_without_web_request():
     rss_html = "<p>" + ("RSSから取得した本文です。" * 25) + "</p>"
     article = Article("title", "https://example.com/article", "Medium", content=rss_html)
@@ -125,4 +131,4 @@ def test_openai_schema_restricts_digest_tags_to_taxonomy():
     tag_schema = responses.arguments["text"]["format"]["schema"]["properties"]["digest_tags"]
     assert tag_schema["items"]["enum"] == ["Python", "Uncategorized"]
     assert tag_schema["maxItems"] == 3
-    assert json.loads(responses.arguments["input"])["writer_preference_weight"] == 1.0
+    assert json.loads(responses.arguments["input"])["preference_weight"] == 1.0

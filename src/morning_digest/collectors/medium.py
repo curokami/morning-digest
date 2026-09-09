@@ -8,7 +8,8 @@ from morning_digest.domain import Article
 
 
 class MediumCollector:
-    def __init__(self, logger=None) -> None:
+    def __init__(self, tag_weight_rules: list[dict] | None = None, logger=None) -> None:
+        self.tag_weight_rules = self._validate_tag_weight_rules(tag_weight_rules or [])
         self.logger = logger or logging.getLogger(__name__)
 
     def collect(self, feeds: list[str | dict]) -> list[Article]:
@@ -30,7 +31,7 @@ class MediumCollector:
                     author=entry.get("author"), publication_date=entry.get("published"),
                     source_tags=tags,
                     content=self._entry_content(entry),
-                    preference_weight=weight,
+                    preference_weight=weight * self._tag_weight(tags),
                 ))
         return list({article.canonical_url: article for article in articles}.values())
 
@@ -56,3 +57,26 @@ class MediumCollector:
         if weight <= 0:
             raise ValueError("Medium feed weight must be greater than zero")
         return feed["url"], weight
+
+    @staticmethod
+    def _validate_tag_weight_rules(rules: list[dict]) -> tuple[tuple[frozenset[str], float], ...]:
+        validated: list[tuple[frozenset[str], float]] = []
+        for rule in rules:
+            if not isinstance(rule, dict) or not isinstance(rule.get("all"), list):
+                raise ValueError("Each tag weight rule must contain an all list")
+            required = frozenset(
+                str(tag).strip().casefold() for tag in rule["all"] if str(tag).strip()
+            )
+            weight = float(rule.get("weight", 1.0))
+            if not required or weight <= 0:
+                raise ValueError("Tag weight rules require tags and a positive weight")
+            validated.append((required, weight))
+        return tuple(validated)
+
+    def _tag_weight(self, tags: tuple[str, ...]) -> float:
+        normalized = {tag.strip().casefold() for tag in tags}
+        multiplier = 1.0
+        for required, weight in self.tag_weight_rules:
+            if required <= normalized:
+                multiplier *= weight
+        return multiplier

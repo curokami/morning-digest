@@ -56,7 +56,7 @@ For each candidate Article:
 5. validate Digest Tags;
 6. persist the successful ProcessingResult.
 
-When the Article limit is lower than the candidate count, higher feed preference weights are processed first. AI processing receives the weight as user-preference context; it remains responsible for judging the Article itself.
+When the Article limit is lower than the candidate count, higher preference weights are processed first. A preference weight combines the feed weight with any matching all-of Source Tag rules. AI processing receives the result as user-preference context; it remains responsible for judging the Article itself.
 
 After all Articles:
 7. load pending successes and newly exhausted retrieval notices;

@@ -12,6 +12,10 @@ sources:
       # Weighted feeds are selected first. Default weight is 1.0.
       - url: "https://medium.com/feed/@favorite_writer"
         weight: 2.0
+    # A rule applies only when every listed RSS source tag is present.
+    tag_weight_rules:
+      - all: ["Elixir", "Programming"]
+        weight: 2.0
 
 ai:
   provider: "openai"
