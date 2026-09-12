@@ -161,6 +161,11 @@ def test_html_is_sorted_and_escaped():
     assert "A &lt;title&gt;" in digest.html_content
 
 
+def test_html_uses_source_specific_title():
+    digest = HtmlDigestBuilder().build([result()], title="🐍 Python Weekly Digest")
+    assert "<h1>🐍 Python Weekly Digest</h1>" in digest.html_content
+
+
 def test_html_renders_adopted_failure_labels():
     failures = [ProcessingResult(
         Article(f"blocked-{classification}", f"https://example.com/{index}", "Medium"),

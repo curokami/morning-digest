@@ -125,7 +125,7 @@ Each configured feed MAY define a positive preference weight; omitted weights SH
 A run with successfully processed new Articles SHALL produce persisted results, one HTML Digest, one delivery attempt, and operational logs.
 
 ### FR-021 Python Weekly
-Python Weekly SHALL be treated as an Article-set Source rather than as one Article. The Collector SHALL discover the latest Issue through the official Archive, extract external links only from configured editorial sections, remove tracking query parameters from canonical URLs, and pass each link into the ordinary Article pipeline. Its default weekly polling day SHALL be Friday in the configured application timezone so a Thursday Issue is not checked before publication. It SHALL produce a separate `Python Weekly Digest` containing at most five Articles by default; Medium SHALL retain its separate daily Digest of at most ten Articles.
+Python Weekly SHALL be treated as an Article-set Source rather than as one Article. The Collector SHALL discover the latest Issue through the official Archive, extract external links only from configured editorial sections, remove tracking query parameters from canonical URLs, and pass each link into the ordinary Article pipeline. Its default weekly polling day SHALL be Friday in the configured application timezone so a Thursday Issue is not checked before publication. It SHALL produce a separate `🐍 Python Weekly Digest` containing at most five Articles by default; Medium SHALL retain its separate daily Digest of at most ten Articles.
 
 ## 6. Non-Functional Requirements
 

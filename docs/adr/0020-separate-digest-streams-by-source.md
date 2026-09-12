@@ -11,7 +11,7 @@ rules and obscure each Source's publication rhythm.
 
 Each Source has an independent Digest configuration containing a maximum Article
 count and subject prefix. Medium keeps a daily `Morning Digest` with at most ten
-Articles. Python Weekly sends a separate `Python Weekly Digest` on its polling
+Articles. Python Weekly sends a separate `🐍 Python Weekly Digest` on its polling
 day with at most five Articles.
 
 Persistence remains shared for canonical-URL duplicate detection, but pending

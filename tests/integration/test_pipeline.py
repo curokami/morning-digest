@@ -84,21 +84,24 @@ def test_separate_source_runs_send_separate_digests(tmp_path):
             super().__init__()
             self.subjects = []
             self.sources = []
+            self.html_messages = []
 
         def send(self, digest, subject_prefix):
             self.subjects.append(subject_prefix)
             self.sources.append({result.article.source for result in digest.results})
+            self.html_messages.append(digest.html_content)
             return super().send(digest, subject_prefix)
 
     store = JsonStore(tmp_path / "state.json")
     delivery = CapturingDelivery()
     for source, subject in (("Medium", "Morning Digest"),
-                            ("Python Weekly", "Python Weekly Digest")):
+                            ("Python Weekly", "🐍 Python Weekly Digest")):
         pipeline = Pipeline(SourceCollector(source), Enricher(), Processor(), store,
                             HtmlDigestBuilder(), delivery)
         pipeline.run([], subject_prefix=subject, delivery_source=source)
 
-    assert delivery.subjects == ["Morning Digest", "Python Weekly Digest"]
+    assert delivery.subjects == ["Morning Digest", "🐍 Python Weekly Digest"]
+    assert "<h1>🐍 Python Weekly Digest</h1>" in delivery.html_messages[1]
     assert delivery.sources == [{"Medium"}, {"Python Weekly"}]
 
 

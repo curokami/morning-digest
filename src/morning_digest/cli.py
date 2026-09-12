@@ -69,7 +69,7 @@ def main() -> int:
         results.append(pipeline.run(
             [],
             int(digest.get("max_articles", 5)),
-            digest.get("subject_prefix", "Python Weekly Digest"),
+            digest.get("subject_prefix", "🐍 Python Weekly Digest"),
             delivery_source="Python Weekly",
         ))
     elif python_weekly.get("enabled", False):

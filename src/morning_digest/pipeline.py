@@ -37,7 +37,7 @@ class Pipeline:
         failed = self.store.pending_failure_results(delivery_source)
         delivery_status = "skipped"
         if pending or failed:
-            digest = self.builder.build(pending, failed_results=failed)
+            digest = self.builder.build(pending, failed_results=failed, title=subject_prefix)
             delivery = self.delivery.send(digest, subject_prefix)
             delivery_status = delivery.status
             if delivery.status == "success":
