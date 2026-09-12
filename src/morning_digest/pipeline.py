@@ -12,8 +12,9 @@ class Pipeline:
         self.store, self.builder, self.delivery = store, builder, delivery
         self.logger = logger or logging.getLogger(__name__)
 
-    def run(self, feeds: list[str | dict], max_articles: int = 10, subject_prefix: str = "Morning Digest") -> dict:
-        self.logger.info("Morning Digest run started")
+    def run(self, feeds: list[str | dict], max_articles: int = 10,
+            subject_prefix: str = "Morning Digest", delivery_source: str | None = None) -> dict:
+        self.logger.info("Digest run started: source=%s", delivery_source or "all")
         candidates = [a for a in self.collector.collect(feeds) if self.store.should_process(a.canonical_url)]
         articles = sorted(candidates, key=lambda article: article.preference_weight, reverse=True)[:max_articles]
         succeeded = 0
@@ -32,8 +33,8 @@ class Pipeline:
                         error_classification=exc.classification, attempt_count=attempts))
                 else:
                     self.store.save_result(ProcessingResult(article=article, status="failed", error=str(exc)))
-        pending = self.store.pending_results()
-        failed = self.store.pending_failure_results()
+        pending = self.store.pending_results(delivery_source)
+        failed = self.store.pending_failure_results(delivery_source)
         delivery_status = "skipped"
         if pending or failed:
             digest = self.builder.build(pending, failed_results=failed)
@@ -43,5 +44,6 @@ class Pipeline:
                 self.store.mark_delivered([r.article.canonical_url for r in pending + failed])
             else:
                 self.logger.error("Delivery failed: %s", delivery.error)
-        self.logger.info("Run finished: collected=%d succeeded=%d delivery=%s", len(articles), succeeded, delivery_status)
+        self.logger.info("Run finished: source=%s collected=%d succeeded=%d delivery=%s",
+                         delivery_source or "all", len(articles), succeeded, delivery_status)
         return {"candidates": len(articles), "succeeded": succeeded, "delivery": delivery_status}

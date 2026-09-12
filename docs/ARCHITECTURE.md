@@ -58,9 +58,9 @@ For each candidate Article:
 
 When the Article limit is lower than the candidate count, higher preference weights are processed first. A preference weight combines the feed weight with any matching all-of Source Tag rules. AI processing receives the result as user-preference context; it remains responsible for judging the Article itself.
 
-After all Articles:
-7. load pending successes and newly exhausted retrieval notices;
-8. if both are empty, finish without email; otherwise build one HTML Digest;
+After all Articles for the current Source:
+7. load that Source's pending successes and newly exhausted retrieval notices;
+8. if both are empty, finish without email; otherwise build one Source-specific HTML Digest;
 9. deliver through Gmail;
 10. record DeliveryResult.
 
@@ -107,7 +107,7 @@ Article-level retrieval, enrichment, AI, taxonomy-validation, and persistence fa
 
 Invalid required Configuration, unreadable Taxonomy, or inability to initialize Persistence MAY terminate startup.
 
-Delivery failure SHALL preserve already persisted successful processing results so Delivery can be retried without another AI request.
+Delivery failure SHALL preserve already persisted successful processing results so Delivery can be retried without another AI request. Pending queues are filtered by Article source, preventing one Source's delivery from consuming another's results.
 
 ## 8. Deployment
 Version 1 supports manual diagnostic runs in GitHub Actions. Production delivery runs locally because Medium article enrichment may reject GitHub-hosted runner traffic. A per-user macOS LaunchAgent invokes the CLI at approximately 07:40 local time, keeping process scheduling external to the application. The CLI checks Source polling schedules before constructing Collectors, so an undued Source receives no request. Python 3.11+ is supported; 3.13 is recommended. uv manages Python project/dependencies; mise manages the development runtime.

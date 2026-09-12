@@ -139,6 +139,22 @@ def test_json_store_roundtrip_and_delivery_queue(tmp_path):
     assert reopened.pending_results() == []
 
 
+def test_json_store_filters_pending_delivery_by_source(tmp_path):
+    store = JsonStore(tmp_path / "state.json")
+    medium = result("https://example.com/medium")
+    weekly = ProcessingResult(
+        Article("Weekly", "https://example.com/weekly", "Python Weekly", content="body"),
+        "success", Summary("ja", "要約です。"),
+        Recommendation(ReadingPriority.HIGH, "理由です。", ("Python",)),
+    )
+    store.save_result(medium)
+    store.save_result(weekly)
+    assert [item.article.canonical_url for item in store.pending_results("Medium")] == [
+        "https://example.com/medium"]
+    assert [item.article.canonical_url for item in store.pending_results("Python Weekly")] == [
+        "https://example.com/weekly"]
+
+
 def test_html_is_sorted_and_escaped():
     digest = HtmlDigestBuilder().build([result(priority=2), result("https://example.com/b", 5)])
     assert digest.results[0].recommendation.reading_priority == 5

@@ -24,7 +24,8 @@ that are not due receive no network request.
 ## Consequences
 
 Python Weekly items use the existing enrichment, AI, persistence, digest, and
-delivery stages. Other weekly or monthly Sources can add their own Collector and
-polling configuration without changing the Article model. A missed weekly
+delivery stages. ADR 0020 later separates delivery streams by Source. Other
+weekly or monthly Sources can add their own Collector and polling configuration
+without changing the Article model. A missed weekly
 polling day is not yet tracked independently; persistent last-poll state is a
 future reliability improvement.

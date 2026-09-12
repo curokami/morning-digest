@@ -73,6 +73,35 @@ def test_pipeline_selects_higher_weight_before_article_limit(tmp_path):
     assert processor.titles == ["favorite"]
 
 
+def test_separate_source_runs_send_separate_digests(tmp_path):
+    class SourceCollector:
+        def __init__(self, source): self.source = source
+        def collect(self, feeds):
+            return [Article(self.source, f"https://e/{self.source}", self.source)]
+
+    class CapturingDelivery(Delivery):
+        def __init__(self):
+            super().__init__()
+            self.subjects = []
+            self.sources = []
+
+        def send(self, digest, subject_prefix):
+            self.subjects.append(subject_prefix)
+            self.sources.append({result.article.source for result in digest.results})
+            return super().send(digest, subject_prefix)
+
+    store = JsonStore(tmp_path / "state.json")
+    delivery = CapturingDelivery()
+    for source, subject in (("Medium", "Morning Digest"),
+                            ("Python Weekly", "Python Weekly Digest")):
+        pipeline = Pipeline(SourceCollector(source), Enricher(), Processor(), store,
+                            HtmlDigestBuilder(), delivery)
+        pipeline.run([], subject_prefix=subject, delivery_source=source)
+
+    assert delivery.subjects == ["Morning Digest", "Python Weekly Digest"]
+    assert delivery.sources == [{"Medium"}, {"Python Weekly"}]
+
+
 def test_access_denial_is_retried_three_times_then_reported_and_excluded(tmp_path):
     class OneArticleCollector:
         def collect(self, feeds):

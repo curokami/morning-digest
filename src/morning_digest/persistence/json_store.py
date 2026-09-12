@@ -46,13 +46,17 @@ class JsonStore:
             self.data["pending_failure_notifications"].append(result.article.canonical_url)
         self._flush()
 
-    def pending_results(self) -> list[ProcessingResult]:
-        return [self._deserialize(self.data["articles"][url])
-                for url in self.data["pending_delivery"] if url in self.data["articles"]]
+    def pending_results(self, source: str | None = None) -> list[ProcessingResult]:
+        results = [self._deserialize(self.data["articles"][url])
+                   for url in self.data["pending_delivery"] if url in self.data["articles"]]
+        return [result for result in results
+                if source is None or result.article.source == source]
 
-    def pending_failure_results(self) -> list[ProcessingResult]:
-        return [self._deserialize(self.data["articles"][url])
-                for url in self.data["pending_failure_notifications"] if url in self.data["articles"]]
+    def pending_failure_results(self, source: str | None = None) -> list[ProcessingResult]:
+        results = [self._deserialize(self.data["articles"][url])
+                   for url in self.data["pending_failure_notifications"] if url in self.data["articles"]]
+        return [result for result in results
+                if source is None or result.article.source == source]
 
     def mark_delivered(self, urls: list[str]) -> None:
         delivered = set(urls)

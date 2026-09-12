@@ -6,7 +6,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from morning_digest.ai import OpenAIProcessor
-from morning_digest.collectors import CollectorGroup, MediumCollector, PythonWeeklyCollector
+from morning_digest.collectors import MediumCollector, PythonWeeklyCollector
 from morning_digest.config import load_config
 from morning_digest.credentials import load_credentials
 from morning_digest.delivery import GmailDelivery
@@ -35,33 +35,47 @@ def main() -> int:
     credentials = load_credentials(
         ("OPENAI_API_KEY", "GMAIL_USERNAME", "GMAIL_APP_PASSWORD", "GMAIL_RECIPIENT"))
     sources_config = config.section("sources")
-    collector_sources: list[tuple[object, object]] = []
     medium = sources_config.get("medium", {})
-    if medium.get("enabled", True):
-        collector_sources.append((MediumCollector(medium.get("tag_weight_rules", [])),
-                                  medium.get("feeds", [])))
-
     app_config = config.section("app")
     now = datetime.now(ZoneInfo(app_config.get("timezone", "Asia/Tokyo")))
     python_weekly = sources_config.get("python_weekly", {})
+    processor = OpenAIProcessor(config.section("ai")["model"], taxonomy)
+    store = JsonStore(config.path(config.section("persistence")["path"]))
+    builder = HtmlDigestBuilder()
+    delivery = GmailDelivery(credentials["GMAIL_USERNAME"], credentials["GMAIL_APP_PASSWORD"],
+        credentials["GMAIL_RECIPIENT"],
+        delivery_config.get("sender", {}).get("name", "Morning Digest"))
+    default_subject = delivery_config.get("subject", {}).get("prefix", "Morning Digest")
+    results = []
+
+    if medium.get("enabled", True):
+        digest = medium.get("digest", {})
+        pipeline = Pipeline(MediumCollector(medium.get("tag_weight_rules", [])),
+            ArticleEnricher(), processor, store, builder, delivery)
+        results.append(pipeline.run(
+            medium.get("feeds", []),
+            int(digest.get("max_articles", app_config.get("max_articles_per_digest", 10))),
+            digest.get("subject_prefix", default_subject),
+            delivery_source="Medium",
+        ))
+
     if python_weekly.get("enabled", False) and source_is_due(python_weekly.get("schedule"), now):
-        collector_sources.append((PythonWeeklyCollector(
+        digest = python_weekly.get("digest", {})
+        pipeline = Pipeline(PythonWeeklyCollector(
             python_weekly.get("archive_url", "https://www.pythonweekly.com/archive"),
             sections=python_weekly.get("sections"),
             weight=float(python_weekly.get("weight", 1.0)),
-        ), None))
+        ), ArticleEnricher(), processor, store, builder, delivery)
+        results.append(pipeline.run(
+            [],
+            int(digest.get("max_articles", 5)),
+            digest.get("subject_prefix", "Python Weekly Digest"),
+            delivery_source="Python Weekly",
+        ))
     elif python_weekly.get("enabled", False):
         logging.getLogger(__name__).info("Python Weekly skipped: source is not due today")
 
-    pipeline = Pipeline(CollectorGroup(collector_sources), ArticleEnricher(),
-        OpenAIProcessor(config.section("ai")["model"], taxonomy),
-        JsonStore(config.path(config.section("persistence")["path"])), HtmlDigestBuilder(),
-        GmailDelivery(credentials["GMAIL_USERNAME"], credentials["GMAIL_APP_PASSWORD"],
-            credentials["GMAIL_RECIPIENT"],
-            delivery_config.get("sender", {}).get("name", "Morning Digest")))
-    result = pipeline.run([], app_config.get("max_articles_per_digest", 10),
-        delivery_config.get("subject", {}).get("prefix", "Morning Digest"))
-    return 1 if result["delivery"] == "failed" else 0
+    return 1 if any(result["delivery"] == "failed" for result in results) else 0
 
 
 if __name__ == "__main__":

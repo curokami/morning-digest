@@ -92,10 +92,10 @@ The five-level Reading Priority SHALL be guided by Relevance 40%, Novelty 20%, I
 Reason to Read SHOULD normally be one or two Japanese sentences.
 
 ### FR-010 Digest
-A Digest entry SHALL contain title, Source, Summary, Reading Priority, Reason to Read, Digest Tags, and original URL. The Digest SHALL be HTML and SHOULD be mobile-readable.
+A Digest entry SHALL contain title, Source, Summary, Reading Priority, Reason to Read, Digest Tags, and original URL. The Digest SHALL be HTML and SHOULD be mobile-readable. Each Source SHALL have an independent digest stream, subject prefix, and maximum Article count. Results from different Sources SHALL NOT be combined in one email.
 
 ### FR-011 Delivery
-When at least one new Article is successfully processed, exactly one Digest email SHALL be sent through Gmail. A newly exhausted retrieval MAY also trigger a Digest containing the failed Article notice. If neither exists, the system SHALL NOT send an empty Digest; the run MAY still be successful. Delivery failure SHALL be logged and SHALL NOT require repeating successful AI processing.
+When a Source has at least one new successfully processed Article, exactly one Digest email for that Source SHALL be sent through Gmail. A newly exhausted retrieval MAY also trigger a Source-specific Digest containing the failed Article notice. If neither exists, the system SHALL NOT send an empty Digest; the run MAY still be successful. Delivery failure SHALL be logged and SHALL NOT require repeating successful AI processing. Pending delivery queues SHALL be filtered by Source so one Source cannot consume another Source's results.
 
 ### FR-012 Configuration
 Runtime application behavior SHALL be configured through `config.yaml`; secrets SHALL NOT be stored there. Process execution scheduling is external. Source polling frequency and weekday MAY be application configuration.
@@ -125,7 +125,7 @@ Each configured feed MAY define a positive preference weight; omitted weights SH
 A run with successfully processed new Articles SHALL produce persisted results, one HTML Digest, one delivery attempt, and operational logs.
 
 ### FR-021 Python Weekly
-Python Weekly SHALL be treated as an Article-set Source rather than as one Article. The Collector SHALL discover the latest Issue through the official Archive, extract external links only from configured editorial sections, remove tracking query parameters from canonical URLs, and pass each link into the ordinary Article pipeline. Its default weekly polling day SHALL be Friday in the configured application timezone so a Thursday Issue is not checked before publication.
+Python Weekly SHALL be treated as an Article-set Source rather than as one Article. The Collector SHALL discover the latest Issue through the official Archive, extract external links only from configured editorial sections, remove tracking query parameters from canonical URLs, and pass each link into the ordinary Article pipeline. Its default weekly polling day SHALL be Friday in the configured application timezone so a Thursday Issue is not checked before publication. It SHALL produce a separate `Python Weekly Digest` containing at most five Articles by default; Medium SHALL retain its separate daily Digest of at most ten Articles.
 
 ## 6. Non-Functional Requirements
 
