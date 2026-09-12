@@ -1,13 +1,15 @@
 import json
+from datetime import datetime
 from types import SimpleNamespace
 from unittest.mock import patch
 
 from morning_digest.ai import OpenAIProcessor
-from morning_digest.collectors import MediumCollector
+from morning_digest.collectors import CollectorGroup, MediumCollector, PythonWeeklyCollector
 from morning_digest.domain import Article, ProcessingResult, ReadingPriority, Recommendation, Summary
 from morning_digest.digest import HtmlDigestBuilder
 from morning_digest.enrichment import ArticleEnricher
 from morning_digest.persistence import JsonStore
+from morning_digest.scheduling import source_is_due
 from morning_digest.taxonomy import Taxonomy
 
 
@@ -47,6 +49,52 @@ def test_medium_tag_weight_requires_all_tags_and_ignores_case():
     collector = MediumCollector([{"all": ["Elixir", "Programming"], "weight": 2.0}])
     assert collector._tag_weight(("elixir", "PROGRAMMING", "Technology")) == 2.0
     assert collector._tag_weight(("Elixir",)) == 1.0
+
+
+def test_python_weekly_discovers_latest_issue_and_extracts_article_sections():
+    archive = '''
+      <a href="/p/python-weekly-issue-762-september-10-2026">Issue 762</a>
+      <a href="/p/python-weekly-issue-761-september-3-2026">Issue 761</a>
+    '''
+    issue = '''
+      <meta property="article:published_time" content="2026-09-10T12:00:00Z">
+      <h5>Articles, Tutorials and Talks</h5>
+      <div><h6><a href="https://example.com/article?utm_source=weekly&amp;page=2">Useful article</a></h6>
+      <p>A useful article description with enough context.</p></div>
+      <h5>Interesting Projects, Tools, and Libraries</h5>
+      <div><h6><a href="https://github.com/example/project">Project</a></h6></div>
+    '''
+    pages = {
+        "https://www.pythonweekly.com/archive": archive,
+        "https://www.pythonweekly.com/p/python-weekly-issue-762-september-10-2026": issue,
+    }
+    collector = PythonWeeklyCollector(
+        "https://www.pythonweekly.com/archive", fetcher=pages.__getitem__)
+    articles = collector.collect()
+
+    assert len(articles) == 1
+    assert articles[0].title == "Useful article"
+    assert articles[0].canonical_url == "https://example.com/article?page=2"
+    assert articles[0].source == "Python Weekly"
+    assert articles[0].source_tags == ("Python", "Articles, Tutorials and Talks")
+    assert articles[0].publication_date == "2026-09-10T12:00:00Z"
+
+
+def test_weekly_source_is_due_only_on_configured_weekday():
+    schedule = {"frequency": "weekly", "weekday": "friday"}
+    assert source_is_due(schedule, datetime(2026, 9, 11))
+    assert not source_is_due(schedule, datetime(2026, 9, 10))
+
+
+def test_collector_group_combines_sources_and_keeps_stronger_duplicate():
+    class StaticCollector:
+        def __init__(self, articles): self.articles = articles
+        def collect(self, settings): return self.articles
+
+    weak = Article("weak", "https://example.com/a", "one", preference_weight=1.0)
+    strong = Article("strong", "https://example.com/a", "two", preference_weight=2.0)
+    group = CollectorGroup([(StaticCollector([weak]), None), (StaticCollector([strong]), None)])
+    assert group.collect()[0] == strong
 
 
 def test_enricher_uses_meaningful_rss_content_without_web_request():

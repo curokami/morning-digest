@@ -9,7 +9,7 @@ Medium RSS, enrichment, Japanese Summary, Recommendation, Reading Priority, Reas
 Potential retry policy, delivery retry tooling, persistence backup, prompt evaluation fixtures, improved observability, failure notification, and HTML-email compatibility testing.
 
 ## Phase 3 — Additional Sources
-Candidates: GitHub, Hacker News, Bluesky, Reddit. New Sources SHOULD use Source-specific Collectors and preserve the Recommendation model.
+Python Weekly is implemented. Further candidates: GitHub, Hacker News, Bluesky, Reddit. New Sources SHOULD use Source-specific Collectors, declare an appropriate polling cadence, and preserve the Recommendation model.
 
 ## Phase 4 — Discovery and Archive
 Potential archive, search, filtering, reading history, and bookmarking, only when demonstrated user need exists.

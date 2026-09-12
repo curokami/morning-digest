@@ -8,7 +8,7 @@ The keywords SHALL, SHOULD, and MAY are normative.
 Morning Digest is a single-user application that reduces information triage. It discovers new articles, summarizes their content, and recommends whether the original is worth reading.
 
 ## 2. MVP Scope
-Version 1 SHALL use Medium RSS as its only Source, OpenAI as its only AI provider, Gmail as its only Delivery mechanism, external scheduling, and JSON for persistence. GitHub Actions SHALL remain available for manual diagnostics.
+Version 1 SHALL use Medium RSS and Python Weekly as Sources, OpenAI as its only AI provider, Gmail as its only Delivery mechanism, external execution scheduling, and JSON for persistence. GitHub Actions SHALL remain available for manual diagnostics.
 
 The application SHALL support Python 3.11 or later; Python 3.13 SHOULD be the reference runtime. uv and mise SHALL be used for project/development environment management.
 
@@ -18,7 +18,7 @@ A normal scheduled run SHALL require no manual intervention. New articles SHALL 
 ## 4. Definitions
 
 ### Source
-An external origin from which Morning Digest obtains information. Version 1 supports Medium RSS only.
+An external origin from which Morning Digest obtains information. Version 1 supports Medium RSS and Python Weekly.
 
 ### Article
 A content item obtained from a Source. It SHALL have a title, canonical URL, source identifier, and sufficient metadata for duplicate detection. Author, publication date, Source Tags, and content SHOULD be preserved when available.
@@ -64,7 +64,7 @@ The ordered application flow from collection through delivery.
 ## 5. Functional Requirements
 
 ### FR-001 Collection
-The system SHALL retrieve all configured Medium RSS feeds and support one or more feeds.
+The system SHALL retrieve all configured Medium RSS feeds and support one or more feeds. On its configured weekly polling day, it SHALL retrieve the latest Python Weekly Issue and normalize links from configured editorial sections as individual Articles.
 
 ### FR-002 Duplicate Detection
 Previously successfully processed Articles SHALL NOT be reprocessed. Canonical URL SHALL be the Version 1 duplicate key.
@@ -98,7 +98,7 @@ A Digest entry SHALL contain title, Source, Summary, Reading Priority, Reason to
 When at least one new Article is successfully processed, exactly one Digest email SHALL be sent through Gmail. A newly exhausted retrieval MAY also trigger a Digest containing the failed Article notice. If neither exists, the system SHALL NOT send an empty Digest; the run MAY still be successful. Delivery failure SHALL be logged and SHALL NOT require repeating successful AI processing.
 
 ### FR-012 Configuration
-Runtime application behavior SHALL be configured through `config.yaml`; secrets SHALL NOT be stored there. Scheduling is not application configuration.
+Runtime application behavior SHALL be configured through `config.yaml`; secrets SHALL NOT be stored there. Process execution scheduling is external. Source polling frequency and weekday MAY be application configuration.
 
 ### FR-013 Taxonomy Storage
 The controlled Taxonomy SHALL be stored in `data/taxonomy.yaml`, separate from runtime configuration. Source Tags SHALL NOT modify it automatically.
@@ -116,13 +116,16 @@ Article-level failure SHALL NOT terminate other Article processing. Only unrecov
 Version 1 SHALL use OpenAI only. Summary and Recommendation are logically separate responsibilities, but the implementation SHOULD obtain summary, priority, reason, and tags in one AI request per Article when practical.
 
 ### FR-018 Scheduling
-The application SHALL NOT implement an internal scheduler. GitHub Actions SHALL support manual diagnostic execution but SHALL NOT schedule production delivery while Medium denies article enrichment from GitHub-hosted runners. On macOS, production delivery SHALL use a per-user LaunchAgent targeting approximately 07:40 local time and credentials from Keychain or environment variables.
+The application SHALL NOT implement an internal process scheduler. GitHub Actions SHALL support manual diagnostic execution but SHALL NOT schedule production delivery while Medium denies article enrichment from GitHub-hosted runners. On macOS, production delivery SHALL use a per-user LaunchAgent targeting approximately 07:40 local time and credentials from Keychain or environment variables. Each enabled Source MAY declare its own polling frequency; a Source that is not due SHALL receive no network request.
 
 ### FR-020 Source Preference Weight
 Each configured feed MAY define a positive preference weight; omitted weights SHALL default to 1.0. Configuration MAY also define positive tag-weight rules that apply only when every required Source Tag is present. Matching tag multipliers SHALL be combined with the feed weight. Higher-weight Articles SHALL be selected before lower-weight Articles when a run exceeds its Article limit. The resulting weight SHALL be supplied to AI processing as reader-preference context, but SHALL NOT dictate a Reading Priority by itself.
 
 ### FR-019 Completion
 A run with successfully processed new Articles SHALL produce persisted results, one HTML Digest, one delivery attempt, and operational logs.
+
+### FR-021 Python Weekly
+Python Weekly SHALL be treated as an Article-set Source rather than as one Article. The Collector SHALL discover the latest Issue through the official Archive, extract external links only from configured editorial sections, remove tracking query parameters from canonical URLs, and pass each link into the ordinary Article pipeline. Its default weekly polling day SHALL be Friday in the configured application timezone so a Thursday Issue is not checked before publication.
 
 ## 6. Non-Functional Requirements
 
@@ -154,13 +157,13 @@ Recommendation: reading_priority, digest_tags, reason_to_read.
 ProcessingResult: Article, Summary?, Recommendation?, status, error?, error_classification?, attempt_count.
 Digest: execution_date, successful results, exhausted retrieval results, html_content.
 DeliveryResult: status, provider metadata/error.
-Configuration: loaded from config.yaml, including optional per-feed preference weights.
+Configuration: loaded from config.yaml, including optional per-feed preference weights and Source polling schedules.
 Taxonomy: loaded from data/taxonomy.yaml.
 
 ## 8. Acceptance Criteria
 Version 1 is accepted when:
 - manual GitHub Actions diagnostic execution works;
-- Medium RSS collection and duplicate detection work;
+- Medium RSS and Python Weekly collection and duplicate detection work;
 - each successful Article receives Summary and Recommendation;
 - Reading Priority, Reason to Read, controlled Digest Tags, and `Uncategorized` fallback work;
 - HTML Digest and Gmail delivery work;
@@ -172,6 +175,6 @@ Version 1 is accepted when:
 - normal operation requires no manual intervention.
 
 ## 9. Future Work
-Possible future work includes additional Sources, operational hardening, archive/search, feedback-driven personalization, additional Delivery mechanisms, and database storage. These are not Version 1 requirements.
+Possible future work includes more Sources, missed-poll catch-up state, operational hardening, archive/search, feedback-driven personalization, additional Delivery mechanisms, and database storage. These are not Version 1 requirements.
 
 Architectural changes SHALL follow: update SPEC → create new ADR if architecture changes → update ARCHITECTURE → update TODO → implement.

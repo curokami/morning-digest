@@ -26,7 +26,7 @@ Pipeline stages SHALL NOT rely on uncontrolled destructive mutation of inputs; t
 ## 3. Components
 
 ### Collector
-Retrieves Medium RSS, normalizes entries into Articles, preserves the richest available RSS body, metadata, and configured preference weight, and coordinates duplicate filtering.
+Source-specific Collectors normalize entries into Articles. MediumCollector reads RSS and preserves its richest available body and metadata. PythonWeeklyCollector discovers the latest Issue from the Archive and extracts individual links from configured editorial sections. CollectorGroup combines and de-duplicates their output.
 
 ### Enricher
 Uses a sufficient RSS body directly. Only when RSS content is missing or too short does it retrieve the original page and normalize its content.
@@ -110,12 +110,12 @@ Invalid required Configuration, unreadable Taxonomy, or inability to initialize 
 Delivery failure SHALL preserve already persisted successful processing results so Delivery can be retried without another AI request.
 
 ## 8. Deployment
-Version 1 supports manual diagnostic runs in GitHub Actions. Production delivery runs locally because Medium article enrichment may reject GitHub-hosted runner traffic. A per-user macOS LaunchAgent invokes the CLI at approximately 07:40 local time, keeping scheduling external to the application. Python 3.11+ is supported; 3.13 is recommended. uv manages Python project/dependencies; mise manages the development runtime.
+Version 1 supports manual diagnostic runs in GitHub Actions. Production delivery runs locally because Medium article enrichment may reject GitHub-hosted runner traffic. A per-user macOS LaunchAgent invokes the CLI at approximately 07:40 local time, keeping process scheduling external to the application. The CLI checks Source polling schedules before constructing Collectors, so an undued Source receives no request. Python 3.11+ is supported; 3.13 is recommended. uv manages Python project/dependencies; mise manages the development runtime.
 
-Secrets come from GitHub Secrets/environment variables or, for local macOS execution, Keychain fallback. Environment variables take precedence. Scheduling does not belong in `config.yaml`. Target production execution is approximately 07:40 JST.
+Secrets come from GitHub Secrets/environment variables or, for local macOS execution, Keychain fallback. Environment variables take precedence. Source polling cadence belongs in `config.yaml`; process execution cadence does not. Target production execution is approximately 07:40 JST.
 
 ## 9. Constraints
-Version 1 intentionally has Medium RSS only, OpenAI only, Gmail only, JSON persistence, a single user, no database, no Web UI, manually reviewed Taxonomy, and no internal scheduler.
+Version 1 intentionally has Medium RSS and Python Weekly only, OpenAI only, Gmail only, JSON persistence, a single user, no database, no Web UI, manually reviewed Taxonomy, and no internal process scheduler.
 
 ## 10. Evolution
 Changes follow SPEC → new ADR when architecture changes → ARCHITECTURE → TODO → implementation. Accepted ADRs are normally preserved; later ADRs supersede earlier decisions.

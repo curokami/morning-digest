@@ -33,6 +33,12 @@
 - [ ] Preserve Source Tags and remove already-successful URLs.
 - [ ] Isolate malformed-feed failures where possible.
 
+## 5a. Python Weekly Collector
+- [x] Discover the latest Issue from the official Archive.
+- [x] Extract configured editorial links as individual Articles.
+- [x] Poll weekly on the Source's configured weekday.
+- [ ] Persist the last successful Source poll for missed-day catch-up.
+
 ## 6. Enrichment
 - [ ] Retrieve sufficient article body and isolate per-Article failures.
 - [x] Prefer sufficient RSS content and fetch the original page only as fallback.

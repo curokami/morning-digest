@@ -16,6 +16,17 @@ sources:
     tag_weight_rules:
       - all: ["Elixir", "Programming"]
         weight: 2.0
+  python_weekly:
+    enabled: true
+    archive_url: "https://www.pythonweekly.com/archive"
+    weight: 1.0
+    schedule:
+      frequency: "weekly"
+      # Friday in app.timezone avoids checking before Thursday's Issue is published.
+      weekday: "friday"
+    sections:
+      - "News"
+      - "Articles, Tutorials and Talks"
 
 ai:
   provider: "openai"

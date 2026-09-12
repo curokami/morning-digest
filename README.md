@@ -2,11 +2,11 @@
 
 > Read less. Learn more.
 
-Morning Digest is a personal information-triage tool that collects new Medium articles, summarizes them in Japanese, and recommends which originals deserve the reader's time.
+Morning Digest is a personal information-triage tool that collects new articles from Medium and Python Weekly, summarizes them in Japanese, and recommends which originals deserve the reader's time.
 
 ## MVP
 
-Version 1 uses Python 3.11+ (3.13 recommended), uv, mise, Medium RSS, OpenAI, Gmail, GitHub Actions, and JSON persistence.
+Version 1 uses Python 3.11+ (3.13 recommended), uv, mise, Medium RSS, the Python Weekly archive, OpenAI, Gmail, GitHub Actions, and JSON persistence.
 
 Each successful article receives a Japanese Summary and a Recommendation containing Reading Priority, Reason to Read, and controlled Digest Tags.
 
