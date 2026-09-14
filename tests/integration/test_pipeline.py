@@ -101,7 +101,7 @@ def test_separate_source_runs_send_separate_digests(tmp_path):
         pipeline.run([], subject_prefix=subject, delivery_source=source)
 
     assert delivery.subjects == ["Morning Digest", "🐍 Python Weekly Digest"]
-    assert "<h1>🐍 Python Weekly Digest</h1>" in delivery.html_messages[1]
+    assert "🐍 Python Weekly Digest</h1>" in delivery.html_messages[1]
     assert delivery.sources == [{"Medium"}, {"Python Weekly"}]
 
 

@@ -163,7 +163,18 @@ def test_html_is_sorted_and_escaped():
 
 def test_html_uses_source_specific_title():
     digest = HtmlDigestBuilder().build([result()], title="🐍 Python Weekly Digest")
-    assert "<h1>🐍 Python Weekly Digest</h1>" in digest.html_content
+    assert "🐍 Python Weekly Digest</h1>" in digest.html_content
+    assert "今週の一押し" in digest.html_content
+    assert "#285c47" in digest.html_content
+
+
+def test_html_features_only_first_article_with_quiet_priority_labels():
+    digest = HtmlDigestBuilder().build([result(priority=2), result("https://example.com/b", 5)])
+    assert digest.html_content.count("今日の一押し") == 1
+    assert "まず読みたい" in digest.html_content
+    assert "気になったら" in digest.html_content
+    assert "Priority 5" not in digest.html_content
+    assert "#526b7b" in digest.html_content
 
 
 def test_html_renders_adopted_failure_labels():

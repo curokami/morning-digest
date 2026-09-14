@@ -40,6 +40,7 @@ It counts access-denied retrieval failures per canonical URL and keeps separate 
 
 ### Digest Builder
 Orders successful results by Reading Priority and renders HTML. It also renders exhausted retrievals in a separate section using cautious Japanese cause labels. It SHALL NOT perform AI inference.
+The email uses a warm paper-like background, a featured first Article, quiet Japanese priority labels, and muted tags. Daily Digests use a blue-gray accent; Python Weekly uses dark green. Styling is inline and requires no external images or template runtime.
 
 ### Delivery
 Sends a completed Digest through Gmail and returns a DeliveryResult.
