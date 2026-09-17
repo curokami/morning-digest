@@ -12,9 +12,15 @@ sources:
       # Weighted feeds are selected first. Default weight is 1.0.
       - url: "https://medium.com/feed/@favorite_writer"
         weight: 2.0
+      # Medium blocks automated tag-page recommendations; use its official tag RSS.
+      # This selects the two newest stories, not an objective popularity ranking.
+      - url: "https://medium.com/feed/tag/omarchy"
+        limit: 2
     # A rule applies only when every listed RSS source tag is present.
     tag_weight_rules:
       - all: ["Elixir", "Programming"]
+        weight: 2.0
+      - all: ["Omarchy"]
         weight: 2.0
     digest:
       max_articles: 10

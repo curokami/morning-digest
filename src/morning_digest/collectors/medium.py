@@ -15,12 +15,13 @@ class MediumCollector:
     def collect(self, feeds: list[str | dict]) -> list[Article]:
         articles: list[Article] = []
         for feed in feeds:
-            feed_url, weight = self._feed_settings(feed)
+            feed_url, weight, limit = self._feed_settings(feed)
             parsed = feedparser.parse(feed_url)
             if getattr(parsed, "bozo", False) and not parsed.entries:
                 self.logger.error("Could not read Medium feed: %s", feed_url)
                 continue
-            for entry in parsed.entries:
+            entries = parsed.entries[:limit] if limit is not None else parsed.entries
+            for entry in entries:
                 url = entry.get("link")
                 title = entry.get("title")
                 if not url or not title:
@@ -48,15 +49,18 @@ class MediumCollector:
                    key=len, default="")
 
     @staticmethod
-    def _feed_settings(feed: str | dict) -> tuple[str, float]:
+    def _feed_settings(feed: str | dict) -> tuple[str, float, int | None]:
         if isinstance(feed, str):
-            return feed, 1.0
+            return feed, 1.0, None
         if not isinstance(feed, dict) or not isinstance(feed.get("url"), str):
             raise ValueError("Each Medium feed must be a URL string or a mapping with a url")
         weight = float(feed.get("weight", 1.0))
         if weight <= 0:
             raise ValueError("Medium feed weight must be greater than zero")
-        return feed["url"], weight
+        limit = int(feed["limit"]) if "limit" in feed else None
+        if limit is not None and limit <= 0:
+            raise ValueError("Medium feed limit must be greater than zero")
+        return feed["url"], weight, limit
 
     @staticmethod
     def _validate_tag_weight_rules(rules: list[dict]) -> tuple[tuple[frozenset[str], float], ...]:

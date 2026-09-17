@@ -31,9 +31,11 @@ def test_taxonomy_rejects_unknown_and_falls_back():
 
 def test_medium_feed_settings_support_weighted_and_legacy_forms():
     assert MediumCollector._feed_settings("https://medium.com/feed/@writer") == (
-        "https://medium.com/feed/@writer", 1.0)
+        "https://medium.com/feed/@writer", 1.0, None)
     assert MediumCollector._feed_settings({"url": "https://medium.com/feed/@favorite", "weight": 2}) == (
-        "https://medium.com/feed/@favorite", 2.0)
+        "https://medium.com/feed/@favorite", 2.0, None)
+    assert MediumCollector._feed_settings({"url": "https://medium.com/feed/tag/omarchy", "limit": 2}) == (
+        "https://medium.com/feed/tag/omarchy", 1.0, 2)
 
 
 def test_medium_feed_content_uses_richest_available_rss_body():
@@ -43,6 +45,21 @@ def test_medium_feed_content_uses_richest_available_rss_body():
         "description": "description",
     }
     assert MediumCollector._entry_content(entry) == "summary body is longer"
+
+
+def test_medium_feed_limit_bounds_entries_before_article_creation():
+    entries = [
+        {"title": f"Story {number}", "link": f"https://example.com/{number}"}
+        for number in range(3)
+    ]
+    parsed = SimpleNamespace(bozo=False, entries=entries)
+
+    with patch("morning_digest.collectors.medium.feedparser.parse", return_value=parsed):
+        articles = MediumCollector().collect([
+            {"url": "https://medium.com/feed/tag/omarchy", "limit": 2}
+        ])
+
+    assert [article.title for article in articles] == ["Story 0", "Story 1"]
 
 
 def test_medium_tag_weight_requires_all_tags_and_ignores_case():
