@@ -185,6 +185,11 @@ def test_html_uses_source_specific_title():
     assert "#285c47" in digest.html_content
 
 
+def test_html_adds_hot_coffee_to_daily_digest_title():
+    digest = HtmlDigestBuilder().build([result()], title="Morning Digest")
+    assert "☕ Morning Digest</h1>" in digest.html_content
+
+
 def test_html_features_only_first_article_with_quiet_priority_labels():
     digest = HtmlDigestBuilder().build([result(priority=2), result("https://example.com/b", 5)])
     assert digest.html_content.count("今日の一押し") == 1
