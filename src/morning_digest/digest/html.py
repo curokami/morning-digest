@@ -18,7 +18,13 @@ class HtmlDigestBuilder:
         failures = list(failed_results or [])
         weekly = any(r.article.source == "Python Weekly" for r in ordered + failures) or "Python Weekly" in title
         accent = "#285c47" if weekly else "#526b7b"
-        display_title = title if weekly or title.lstrip().startswith("☕") else f"☕ {title}"
+        if weekly:
+            title_heading = f'''<h1 style="font-size:27px;line-height:1.4;margin:0 0 10px;font-family:Georgia,serif;color:{accent}">{escape(title)}</h1>'''
+        else:
+            title_heading = f'''<table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 0 10px"><tr>
+<td style="padding:0 14px 0 0;vertical-align:middle"><img src="cid:morning-digest-coffee" width="64" height="64" alt="Hot coffee" style="display:block;width:64px;height:64px;border:0"></td>
+<td style="vertical-align:middle"><h1 style="font-size:27px;line-height:1.4;margin:0;font-family:Georgia,serif;color:{accent}">{escape(title)}</h1></td>
+</tr></table>'''
         priority_labels = {5: "まず読みたい", 4: "おすすめ", 3: "時間があれば", 2: "気になったら", 1: "参考までに"}
         cards = []
         for index, result in enumerate(ordered):
@@ -49,7 +55,7 @@ class HtmlDigestBuilder:
         html = f'''<!doctype html><html lang="ja"><head><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="margin:0;background:#f3f2ec;color:#303730;font-family:-apple-system,BlinkMacSystemFont,'Hiragino Kaku Gothic ProN',sans-serif">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:24px 12px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:680px;background:#fffdf8"><tr><td style="padding:28px 24px">
 <header style="border-top:3px solid {accent};border-bottom:1px solid #deded5;padding:20px 0;margin-bottom:28px">
-<h1 style="font-size:27px;line-height:1.4;margin:0 0 10px;font-family:Georgia,serif;color:{accent}">{escape(display_title)}</h1>
+{title_heading}
 <p style="margin:0;font-size:12px;letter-spacing:1px;color:#777c78">{escape(day)} · {len(ordered)} articles</p></header>
 {''.join(cards)}{failure_section}<footer style="padding-top:8px;font-size:12px;color:#969b92">Read less. Learn more.</footer>
 </td></tr></table></td></tr></table></body></html>'''

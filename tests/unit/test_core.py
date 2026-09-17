@@ -6,6 +6,7 @@ from unittest.mock import patch
 from morning_digest.ai import OpenAIProcessor
 from morning_digest.collectors import CollectorGroup, MediumCollector, PythonWeeklyCollector
 from morning_digest.domain import Article, ProcessingResult, ReadingPriority, Recommendation, Summary
+from morning_digest.delivery import GmailDelivery
 from morning_digest.digest import HtmlDigestBuilder
 from morning_digest.enrichment import ArticleEnricher
 from morning_digest.persistence import JsonStore
@@ -187,7 +188,19 @@ def test_html_uses_source_specific_title():
 
 def test_html_adds_hot_coffee_to_daily_digest_title():
     digest = HtmlDigestBuilder().build([result()], title="Morning Digest")
-    assert "☕ Morning Digest</h1>" in digest.html_content
+    assert 'src="cid:morning-digest-coffee"' in digest.html_content
+    assert "Morning Digest</h1>" in digest.html_content
+
+
+def test_gmail_message_embeds_daily_coffee_image():
+    digest = HtmlDigestBuilder().build([result()], title="Morning Digest")
+    message = GmailDelivery("from@example.com", "password", "to@example.com")._build_message(
+        digest, "Morning Digest")
+
+    related = [part for part in message.walk() if part.get_content_maintype() == "image"]
+    assert len(related) == 1
+    assert related[0]["Content-ID"] == "<morning-digest-coffee>"
+    assert related[0].get_content_type() == "image/jpeg"
 
 
 def test_html_features_only_first_article_with_quiet_priority_labels():
