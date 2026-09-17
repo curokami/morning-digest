@@ -13,6 +13,7 @@ dependencies = [
 
 [project.scripts]
 morning-digest = "morning_digest.cli:main"
+morning-digest-window = "morning_digest.window_launcher:main"
 
 [dependency-groups]
 dev = ["pytest>=8"]

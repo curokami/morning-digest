@@ -18,10 +18,10 @@ from morning_digest.scheduling import source_is_due
 from morning_digest.taxonomy import Taxonomy
 
 
-def main() -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Build and send the Morning Digest")
     parser.add_argument("--config", default="config.yaml")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     config = load_config(args.config)
     log_config = config.section("logging")
     log_path = config.path(log_config.get("path", "logs/morning-digest.log"))

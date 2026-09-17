@@ -9,8 +9,8 @@ access-denial challenges. Requiring a terminal session and temporary exported
 credentials would make unattended execution unreliable.
 
 ## Decision
-Production runs use a per-user macOS LaunchAgent with a 07:40 local-time
-`StartCalendarInterval`. It invokes the project CLI through an absolute `uv`
+Production runs use a per-user macOS LaunchAgent with an 08:00 local-time
+`StartCalendarInterval`. It invokes the project's random-window launcher through an absolute `uv`
 path and working directory. Credentials remain in macOS Keychain and logs remain
 inside the ignored project `logs` directory.
 

@@ -111,9 +111,9 @@ Invalid required Configuration, unreadable Taxonomy, or inability to initialize 
 Delivery failure SHALL preserve already persisted successful processing results so Delivery can be retried without another AI request. Pending queues are filtered by Article source, preventing one Source's delivery from consuming another's results.
 
 ## 8. Deployment
-Version 1 supports manual diagnostic runs in GitHub Actions. Production delivery runs locally because Medium article enrichment may reject GitHub-hosted runner traffic. A per-user macOS LaunchAgent invokes the CLI at approximately 07:40 local time, keeping process scheduling external to the application. The CLI checks Source polling schedules before constructing Collectors, so an undued Source receives no request. Python 3.11+ is supported; 3.13 is recommended. uv manages Python project/dependencies; mise manages the development runtime.
+Version 1 supports manual diagnostic runs in GitHub Actions. Production delivery runs locally because Medium article enrichment may reject GitHub-hosted runner traffic. A per-user macOS LaunchAgent starts a one-shot window launcher at 08:00 local time; it randomly delays collection until no later than 10:50. The CLI checks Source polling schedules before constructing Collectors, so an undued Source receives no request. Python 3.11+ is supported; 3.13 is recommended. uv manages Python project/dependencies; mise manages the development runtime.
 
-Secrets come from GitHub Secrets/environment variables or, for local macOS execution, Keychain fallback. Environment variables take precedence. Source polling cadence belongs in `config.yaml`; process execution cadence does not. Target production execution is approximately 07:40 JST.
+Secrets come from GitHub Secrets/environment variables or, for local macOS execution, Keychain fallback. Environment variables take precedence. Source polling cadence belongs in `config.yaml`; process execution cadence does not. Production execution is randomized daily within 08:00–10:50 JST.
 
 ## 9. Constraints
 Version 1 intentionally has Medium RSS and Python Weekly only, OpenAI only, Gmail only, JSON persistence, a single user, no database, no Web UI, manually reviewed Taxonomy, and no internal process scheduler.

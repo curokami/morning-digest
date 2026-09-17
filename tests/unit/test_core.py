@@ -12,6 +12,7 @@ from morning_digest.enrichment import ArticleEnricher
 from morning_digest.persistence import JsonStore
 from morning_digest.scheduling import source_is_due
 from morning_digest.taxonomy import Taxonomy
+from morning_digest.window_launcher import choose_delay
 
 
 def result(url="https://example.com/a", priority=4):
@@ -102,6 +103,12 @@ def test_weekly_source_is_due_only_on_configured_weekday():
     schedule = {"frequency": "weekly", "weekday": "friday"}
     assert source_is_due(schedule, datetime(2026, 9, 11))
     assert not source_is_due(schedule, datetime(2026, 9, 10))
+
+
+def test_random_window_delay_stays_between_0800_and_1050():
+    assert choose_delay(datetime(2026, 9, 17, 8, 0), lambda upper: upper - 1) == 10_200
+    assert choose_delay(datetime(2026, 9, 17, 9, 30), lambda upper: upper - 1) == 4_800
+    assert choose_delay(datetime(2026, 9, 17, 10, 51), lambda upper: 0) is None
 
 
 def test_collector_group_combines_sources_and_keeps_stronger_duplicate():
