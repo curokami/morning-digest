@@ -1,3 +1,5 @@
+import logging
+
 from morning_digest.domain import Article, DeliveryResult, ProcessingResult, ReadingPriority, Recommendation, Summary
 from morning_digest.digest import HtmlDigestBuilder
 from morning_digest.enrichment import ArticleAccessError
@@ -35,6 +37,17 @@ def test_pipeline_isolates_failure_and_deduplicates(tmp_path):
     assert first == {"candidates": 2, "succeeded": 1, "delivery": "success"}
     assert second["candidates"] == 1
     assert delivery.calls == 1
+
+
+def test_pipeline_logs_article_position_for_success_and_failure(tmp_path, caplog):
+    pipeline = Pipeline(Collector(), Enricher(), Processor(), JsonStore(tmp_path / "state.json"),
+                        HtmlDigestBuilder(), Delivery())
+
+    with caplog.at_level(logging.INFO, logger="morning_digest.pipeline"):
+        pipeline.run(["feed"])
+
+    assert "Article succeeded: position=1/2 url=https://e/ok" in caplog.text
+    assert "Article failed: position=2/2 url=https://e/bad" in caplog.text
 
 
 def test_delivery_retry_reuses_persisted_ai_result(tmp_path):

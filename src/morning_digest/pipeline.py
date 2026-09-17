@@ -18,13 +18,17 @@ class Pipeline:
         candidates = [a for a in self.collector.collect(feeds) if self.store.should_process(a.canonical_url)]
         articles = sorted(candidates, key=lambda article: article.preference_weight, reverse=True)[:max_articles]
         succeeded = 0
-        for article in articles:
+        total = len(articles)
+        for position, article in enumerate(articles, start=1):
             try:
                 result = self.processor.process(self.enricher.enrich(article))
                 self.store.save_result(result)
                 succeeded += 1
+                self.logger.info("Article succeeded: position=%d/%d url=%s",
+                                 position, total, article.canonical_url)
             except Exception as exc:
-                self.logger.exception("Article failed: %s", article.canonical_url)
+                self.logger.exception("Article failed: position=%d/%d url=%s",
+                                      position, total, article.canonical_url)
                 if isinstance(exc, ArticleAccessError):
                     attempts = self.store.failure_attempt_count(article.canonical_url) + 1
                     status = "retrieval_exhausted" if attempts >= 3 else "retry_pending"
