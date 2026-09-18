@@ -64,7 +64,7 @@ The ordered application flow from collection through delivery.
 ## 5. Functional Requirements
 
 ### FR-001 Collection
-The system SHALL retrieve all configured Medium RSS feeds and support one or more feeds. On its configured weekly polling day, it SHALL retrieve the latest Python Weekly Issue and normalize links from configured editorial sections as individual Articles.
+The system SHALL support one or more configured Medium RSS feeds. Preferred feeds SHALL be eligible for daily retrieval; ordinary feeds MAY be divided into configured daily rotation groups to reduce request concentration. Across one complete rotation, every configured feed SHALL be eligible once. On its configured weekly polling day, the system SHALL retrieve the latest Python Weekly Issue and normalize links from configured editorial sections as individual Articles.
 
 ### FR-002 Duplicate Detection
 Previously successfully processed Articles SHALL NOT be reprocessed. Canonical URL SHALL be the Version 1 duplicate key.

@@ -14,7 +14,7 @@ from morning_digest.digest import HtmlDigestBuilder
 from morning_digest.enrichment import ArticleEnricher
 from morning_digest.persistence import JsonStore
 from morning_digest.pipeline import Pipeline
-from morning_digest.scheduling import source_is_due
+from morning_digest.scheduling import select_rotating_feeds, source_is_due
 from morning_digest.taxonomy import Taxonomy
 
 
@@ -50,10 +50,16 @@ def main(argv: list[str] | None = None) -> int:
 
     if medium.get("enabled", True):
         digest = medium.get("digest", {})
+        all_feeds = medium.get("feeds", [])
+        rotation_days = int(medium.get("polling", {}).get("rotation_days", 3))
+        feeds = select_rotating_feeds(all_feeds, now.date(), rotation_days)
+        logging.getLogger(__name__).info(
+            "Medium feeds selected: %d/%d rotation_days=%d",
+            len(feeds), len(all_feeds), rotation_days)
         pipeline = Pipeline(MediumCollector(medium.get("tag_weight_rules", [])),
             ArticleEnricher(), processor, store, builder, delivery)
         results.append(pipeline.run(
-            medium.get("feeds", []),
+            feeds,
             int(digest.get("max_articles", app_config.get("max_articles_per_digest", 10))),
             digest.get("subject_prefix", default_subject),
             delivery_source="Medium",

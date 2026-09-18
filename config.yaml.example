@@ -7,6 +7,9 @@ app:
 sources:
   medium:
     enabled: true
+    # Preferred feeds run daily; ordinary feeds are split across three days.
+    polling:
+      rotation_days: 3
     feeds:
       - "https://medium.com/feed/@example"
       # Weighted feeds are selected first. Default weight is 1.0.
@@ -16,6 +19,7 @@ sources:
       # This selects the two newest stories, not an objective popularity ranking.
       - url: "https://medium.com/feed/tag/omarchy"
         limit: 2
+        daily: true
     # A rule applies only when every listed RSS source tag is present.
     tag_weight_rules:
       - all: ["Elixir", "Programming"]

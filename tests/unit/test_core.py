@@ -10,7 +10,7 @@ from morning_digest.delivery import GmailDelivery
 from morning_digest.digest import HtmlDigestBuilder
 from morning_digest.enrichment import ArticleEnricher
 from morning_digest.persistence import JsonStore
-from morning_digest.scheduling import source_is_due
+from morning_digest.scheduling import select_rotating_feeds, source_is_due
 from morning_digest.taxonomy import Taxonomy
 from morning_digest.window_launcher import choose_delay
 
@@ -103,6 +103,25 @@ def test_weekly_source_is_due_only_on_configured_weekday():
     schedule = {"frequency": "weekly", "weekday": "friday"}
     assert source_is_due(schedule, datetime(2026, 9, 11))
     assert not source_is_due(schedule, datetime(2026, 9, 10))
+
+
+def test_medium_feeds_rotate_ordinary_sources_but_keep_preferred_daily():
+    ordinary = [f"https://medium.com/feed/@writer{index}" for index in range(7)]
+    favorite = {"url": "https://medium.com/feed/@favorite", "weight": 2.0}
+    tag = {"url": "https://medium.com/feed/tag/omarchy", "daily": True}
+    feeds = ordinary + [favorite, tag]
+
+    selections = [
+        select_rotating_feeds(feeds, datetime(2026, 9, day).date(), 3)
+        for day in (18, 19, 20)
+    ]
+
+    assert all(favorite in selection and tag in selection for selection in selections)
+    selected_ordinary = [
+        feed for selection in selections for feed in selection if isinstance(feed, str)
+    ]
+    assert sorted(selected_ordinary) == sorted(ordinary)
+    assert len(selected_ordinary) == len(set(selected_ordinary))
 
 
 def test_random_window_delay_stays_between_0800_and_1050():

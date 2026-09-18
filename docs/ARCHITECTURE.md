@@ -26,7 +26,7 @@ Pipeline stages SHALL NOT rely on uncontrolled destructive mutation of inputs; t
 ## 3. Components
 
 ### Collector
-Source-specific Collectors normalize entries into Articles. MediumCollector reads RSS and preserves its richest available body and metadata. PythonWeeklyCollector discovers the latest Issue from the Archive and extracts individual links from configured editorial sections. CollectorGroup combines and de-duplicates their output.
+Source-specific Collectors normalize entries into Articles. Before MediumCollector runs, the scheduler retains preferred feeds and selects one balanced daily group of ordinary feeds; MediumCollector then reads RSS and preserves its richest available body and metadata. PythonWeeklyCollector discovers the latest Issue from the Archive and extracts individual links from configured editorial sections. CollectorGroup combines and de-duplicates their output.
 
 ### Enricher
 Uses a sufficient RSS body directly. Only when RSS content is missing or too short does it retrieve the original page and normalize its content.
