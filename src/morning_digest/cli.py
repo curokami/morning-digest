@@ -6,7 +6,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from morning_digest.ai import OpenAIProcessor
-from morning_digest.collectors import MediumCollector, PythonWeeklyCollector
+from morning_digest.collectors import ElixirLibHuntCollector, MediumCollector, PythonWeeklyCollector
 from morning_digest.config import load_config
 from morning_digest.credentials import load_credentials
 from morning_digest.delivery import GmailDelivery
@@ -39,6 +39,7 @@ def main(argv: list[str] | None = None) -> int:
     app_config = config.section("app")
     now = datetime.now(ZoneInfo(app_config.get("timezone", "Asia/Tokyo")))
     python_weekly = sources_config.get("python_weekly", {})
+    awesome_elixir = sources_config.get("awesome_elixir", {})
     processor = OpenAIProcessor(config.section("ai")["model"], taxonomy)
     store = JsonStore(config.path(config.section("persistence")["path"]))
     builder = HtmlDigestBuilder()
@@ -80,6 +81,19 @@ def main(argv: list[str] | None = None) -> int:
         ))
     elif python_weekly.get("enabled", False):
         logging.getLogger(__name__).info("Python Weekly skipped: source is not due today")
+
+    if awesome_elixir.get("enabled", False) and source_is_due(awesome_elixir.get("schedule"), now):
+        digest = awesome_elixir.get("digest", {})
+        pipeline = Pipeline(ElixirLibHuntCollector(
+            awesome_elixir.get("feed_url", "https://elixir.libhunt.com/newsletter/feed")),
+            ArticleEnricher(), processor, store, builder, delivery)
+        results.append(pipeline.run(
+            [], int(digest.get("max_articles", 5)),
+            digest.get("subject_prefix", "⚗️ Awesome Elixir Digest"),
+            delivery_source="Awesome Elixir",
+        ))
+    elif awesome_elixir.get("enabled", False):
+        logging.getLogger(__name__).info("Awesome Elixir skipped: source is not due today")
 
     return 1 if any(result["delivery"] == "failed" for result in results) else 0
 

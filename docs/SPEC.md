@@ -8,7 +8,7 @@ The keywords SHALL, SHOULD, and MAY are normative.
 Morning Digest is a single-user application that reduces information triage. It discovers new articles, summarizes their content, and recommends whether the original is worth reading.
 
 ## 2. MVP Scope
-Version 1 SHALL use Medium RSS and Python Weekly as Sources, OpenAI as its only AI provider, Gmail as its only Delivery mechanism, external execution scheduling, and JSON for persistence. GitHub Actions SHALL remain available for manual diagnostics.
+Version 1 SHALL use Medium RSS, Python Weekly, and Awesome Elixir Newsletter as Sources, OpenAI as its only AI provider, Gmail as its only Delivery mechanism, external execution scheduling, and JSON for persistence. GitHub Actions SHALL remain available for manual diagnostics.
 
 The application SHALL support Python 3.11 or later; Python 3.13 SHOULD be the reference runtime. uv and mise SHALL be used for project/development environment management.
 
@@ -18,7 +18,7 @@ A normal scheduled run SHALL require no manual intervention. New articles SHALL 
 ## 4. Definitions
 
 ### Source
-An external origin from which Morning Digest obtains information. Version 1 supports Medium RSS and Python Weekly.
+An external origin from which Morning Digest obtains information. Version 1 supports Medium RSS, Python Weekly, and Awesome Elixir Newsletter.
 
 ### Article
 A content item obtained from a Source. It SHALL have a title, canonical URL, source identifier, and sufficient metadata for duplicate detection. Author, publication date, Source Tags, and content SHOULD be preserved when available.
@@ -65,6 +65,8 @@ The ordered application flow from collection through delivery.
 
 ### FR-001 Collection
 The system SHALL support one or more configured Medium RSS feeds. Preferred feeds SHALL be eligible for daily retrieval; ordinary feeds MAY be divided into configured daily rotation groups to reduce request concentration. Across one complete rotation, every configured feed SHALL be eligible once. On its configured weekly polling day, the system SHALL retrieve the latest Python Weekly Issue and normalize links from configured editorial sections as individual Articles.
+
+On its configured weekly polling day, the system SHALL discover the latest Awesome Elixir Issue through its official RSS, exclude sponsored entries, normalize editorial stories and trending projects as Articles, and deliver at most five selections in a separate Digest.
 
 ### FR-002 Duplicate Detection
 Previously successfully processed Articles SHALL NOT be reprocessed. Canonical URL SHALL be the Version 1 duplicate key.

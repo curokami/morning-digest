@@ -4,7 +4,9 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from morning_digest.ai import OpenAIProcessor
-from morning_digest.collectors import CollectorGroup, MediumCollector, PythonWeeklyCollector
+from morning_digest.collectors import (
+    CollectorGroup, ElixirLibHuntCollector, MediumCollector, PythonWeeklyCollector,
+)
 from morning_digest.domain import Article, ProcessingResult, ReadingPriority, Recommendation, Summary
 from morning_digest.delivery import GmailDelivery
 from morning_digest.digest import HtmlDigestBuilder
@@ -97,6 +99,41 @@ def test_python_weekly_discovers_latest_issue_and_extracts_article_sections():
     assert articles[0].source == "Python Weekly"
     assert articles[0].source_tags == ("Python", "Articles, Tutorials and Talks")
     assert articles[0].publication_date == "2026-09-10T12:00:00Z"
+
+
+def test_elixir_libhunt_extracts_editorial_entries_and_excludes_sponsors():
+    issue = '''
+      <h3 class="section-title">Popular News and Articles</h3>
+      <ul>
+        <li><a class="title" href="https://video.example/hologram">Hologram: Local First</a></li>
+        <li><a class="title" href="https://forum.example/hologram">Hologram: Local First (Talk)</a>
+          <p class="description">A substantially richer explanation of local-first synchronization.</p></li>
+        <li id="sponsored"><a class="title" href="https://ads.example">Advertisement</a></li>
+      </ul>
+      <h3 class="section-title">Trending packages and projects</h3>
+      <ul>
+        <li><a href="https://github.com/example/popcorn">GitHub</a>
+          <a class="title" href="https://libhunt.example/popcorn">popcorn</a>
+          <p class="description">Running Elixir in the browser</p></li>
+      </ul>
+    '''
+    feed = SimpleNamespace(entries=[{
+        "link": "https://elixir.libhunt.com/newsletter/538",
+        "published": "2026-09-17",
+    }])
+    collector = ElixirLibHuntCollector(
+        "https://elixir.libhunt.com/newsletter/feed",
+        fetcher=lambda _url: issue,
+        feed_parser=lambda _url: feed,
+    )
+
+    articles = collector.collect([])
+
+    assert [article.title for article in articles] == ["Hologram: Local First (Talk)", "popcorn"]
+    assert articles[0].canonical_url == "https://forum.example/hologram"
+    assert articles[0].preference_weight == 2.0
+    assert articles[1].canonical_url == "https://github.com/example/popcorn"
+    assert all(article.source == "Awesome Elixir" for article in articles)
 
 
 def test_weekly_source_is_due_only_on_configured_weekday():
@@ -216,6 +253,18 @@ def test_html_adds_hot_coffee_to_daily_digest_title():
     digest = HtmlDigestBuilder().build([result()], title="Morning Digest")
     assert 'src="cid:morning-digest-coffee"' in digest.html_content
     assert "Morning Digest</h1>" in digest.html_content
+
+
+def test_html_uses_elixir_weekly_identity_without_coffee_image():
+    elixir_result = result()
+    elixir_result = ProcessingResult(
+        Article("Elixir article", "https://example.com/elixir", "Awesome Elixir"),
+        elixir_result.status, elixir_result.summary, elixir_result.recommendation)
+    digest = HtmlDigestBuilder().build([elixir_result], title="⚗️ Awesome Elixir Digest")
+    assert "⚗️ Awesome Elixir Digest</h1>" in digest.html_content
+    assert "今週の一押し" in digest.html_content
+    assert "#60417a" in digest.html_content
+    assert "cid:morning-digest-coffee" not in digest.html_content
 
 
 def test_gmail_message_embeds_daily_coffee_image():

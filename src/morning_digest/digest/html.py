@@ -16,8 +16,12 @@ class HtmlDigestBuilder:
               title: str = "Morning Digest") -> Digest:
         ordered = sorted(results, key=lambda r: int(r.recommendation.reading_priority), reverse=True)
         failures = list(failed_results or [])
-        weekly = any(r.article.source == "Python Weekly" for r in ordered + failures) or "Python Weekly" in title
-        accent = "#285c47" if weekly else "#526b7b"
+        python_weekly = (any(r.article.source == "Python Weekly" for r in ordered + failures)
+                         or "Python Weekly" in title)
+        elixir_weekly = (any(r.article.source == "Awesome Elixir" for r in ordered + failures)
+                         or "Awesome Elixir" in title)
+        weekly = python_weekly or elixir_weekly
+        accent = "#285c47" if python_weekly else "#60417a" if elixir_weekly else "#526b7b"
         if weekly:
             title_heading = f'''<h1 style="font-size:27px;line-height:1.4;margin:0 0 10px;font-family:Georgia,serif;color:{accent}">{escape(title)}</h1>'''
         else:
