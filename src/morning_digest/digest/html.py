@@ -63,5 +63,30 @@ class HtmlDigestBuilder:
 <p style="margin:0;font-size:12px;letter-spacing:1px;color:#777c78">{escape(day)} · {len(ordered)} articles</p></header>
 {''.join(cards)}{failure_section}<footer style="padding-top:8px;font-size:12px;color:#969b92">Read less. Learn more.</footer>
 </td></tr></table></td></tr></table></body></html>'''
+        plain_parts = [title, f"{day} / {len(ordered)} articles"]
+        for index, result in enumerate(ordered):
+            article, rec = result.article, result.recommendation
+            if index == 0:
+                plain_parts.append("今週の一押し" if weekly else "今日の一押し")
+            plain_parts.extend((
+                article.title,
+                article.canonical_url,
+                result.summary.text,
+                f"読む理由: {rec.reason_to_read}",
+                " · ".join(rec.digest_tags),
+            ))
+        if failures:
+            plain_parts.append("取得できなかった記事")
+            for result in failures:
+                label = self.FAILURE_LABELS.get(
+                    result.error_classification, "取得不能（原因不明）")
+                plain_parts.extend((
+                    result.article.title,
+                    result.article.canonical_url,
+                    label,
+                    f"{result.article.source} · {result.attempt_count}回試行",
+                ))
+        plain_parts.append("Read less. Learn more.")
+        plain = "\n\n".join(part for part in plain_parts if part)
         return Digest(execution_date=day, results=tuple(ordered), html_content=html,
-                      failed_results=tuple(failures))
+                      plain_content=plain, failed_results=tuple(failures))

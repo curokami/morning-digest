@@ -24,11 +24,20 @@ class GmailDelivery:
         message["Subject"] = f"{subject_prefix} — {digest.execution_date}"
         message["From"] = f"{self.sender_name} <{self.username}>"
         message["To"] = self.recipient
-        message.set_content("HTML対応メールクライアントでご覧ください。")
-        message.add_alternative(digest.html_content, subtype="html")
+        plain_content = digest.plain_content or "HTML対応メールクライアントでご覧ください。"
         if "cid:morning-digest-coffee" in digest.html_content:
+            alternative = EmailMessage()
+            alternative.set_content(plain_content)
+            alternative.add_alternative(digest.html_content, subtype="html")
+            message.make_related()
+            message.attach(alternative)
             image = files("morning_digest").joinpath("assets/coffee-cup.jpg").read_bytes()
-            message.get_payload()[-1].add_related(
-                image, maintype="image", subtype="jpeg",
+            image_part = EmailMessage()
+            image_part.set_content(
+                image, maintype="image", subtype="jpeg", disposition="inline",
                 cid="<morning-digest-coffee>", filename="coffee-cup.jpg")
+            message.attach(image_part)
+        else:
+            message.set_content(plain_content)
+            message.add_alternative(digest.html_content, subtype="html")
         return message

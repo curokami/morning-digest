@@ -68,6 +68,7 @@ class Digest:
     execution_date: str
     results: tuple[ProcessingResult, ...]
     html_content: str
+    plain_content: str = ""
     failed_results: tuple[ProcessingResult, ...] = ()
 
 

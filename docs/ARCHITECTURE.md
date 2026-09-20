@@ -44,6 +44,10 @@ The email uses a warm paper-like background, a featured first Article, quiet Jap
 
 ### Delivery
 Sends a completed Digest through Gmail and returns a DeliveryResult.
+Messages with inline artwork use a `multipart/related` root whose first child is
+a `multipart/alternative` containing real plain-text and HTML Digest bodies; the
+CID-addressed image is the related sibling. Messages without inline artwork use
+`multipart/alternative` directly.
 
 ### Logger
 Records execution and failure information without secrets.

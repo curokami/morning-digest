@@ -253,6 +253,10 @@ def test_html_adds_hot_coffee_to_daily_digest_title():
     digest = HtmlDigestBuilder().build([result()], title="Morning Digest")
     assert 'src="cid:morning-digest-coffee"' in digest.html_content
     assert "Morning Digest</h1>" in digest.html_content
+    assert "A <title>" in digest.plain_content
+    assert "https://example.com/a" in digest.plain_content
+    assert "要約です。" in digest.plain_content
+    assert "読む理由: 読む理由です。" in digest.plain_content
 
 
 def test_html_uses_elixir_weekly_identity_without_coffee_image():
@@ -267,15 +271,33 @@ def test_html_uses_elixir_weekly_identity_without_coffee_image():
     assert "cid:morning-digest-coffee" not in digest.html_content
 
 
-def test_gmail_message_embeds_daily_coffee_image():
+def test_gmail_message_uses_related_root_with_alternative_and_inline_image():
     digest = HtmlDigestBuilder().build([result()], title="Morning Digest")
     message = GmailDelivery("from@example.com", "password", "to@example.com")._build_message(
         digest, "Morning Digest")
 
-    related = [part for part in message.walk() if part.get_content_maintype() == "image"]
-    assert len(related) == 1
-    assert related[0]["Content-ID"] == "<morning-digest-coffee>"
-    assert related[0].get_content_type() == "image/jpeg"
+    assert message.get_content_type() == "multipart/related"
+    root_parts = list(message.iter_parts())
+    assert [part.get_content_type() for part in root_parts] == [
+        "multipart/alternative", "image/jpeg"]
+
+    alternative, image = root_parts
+    alternatives = list(alternative.iter_parts())
+    assert [part.get_content_type() for part in alternatives] == ["text/plain", "text/html"]
+    assert "要約です。" in alternatives[0].get_content()
+    assert "cid:morning-digest-coffee" in alternatives[1].get_content()
+    assert image["Content-ID"] == "<morning-digest-coffee>"
+    assert image.get_content_disposition() == "inline"
+
+
+def test_gmail_message_without_inline_image_has_alternative_root():
+    digest = HtmlDigestBuilder().build([result()], title="🐍 Python Weekly Digest")
+    message = GmailDelivery("from@example.com", "password", "to@example.com")._build_message(
+        digest, "🐍 Python Weekly Digest")
+
+    assert message.get_content_type() == "multipart/alternative"
+    assert [part.get_content_type() for part in message.iter_parts()] == [
+        "text/plain", "text/html"]
 
 
 def test_html_features_only_first_article_with_quiet_priority_labels():
