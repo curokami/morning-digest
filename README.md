@@ -112,7 +112,8 @@ for a manual diagnostic run.
 
 Production delivery uses a per-user LaunchAgent that starts at 08:00 local
 time. Its one-shot launcher selects a random execution time between 08:00 and
-10:50. The installed plist is based on
+10:50; if the Mac resumes later that same day, collection starts immediately.
+The installed plist is based on
 `launchd/com.curokami.morning-digest.plist.example`, with absolute local paths
 substituted for `UV_EXECUTABLE` and `PROJECT_DIRECTORY`. Runtime credentials are
 read from the macOS Keychain; no credentials belong in the plist.

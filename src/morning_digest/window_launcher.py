@@ -26,6 +26,11 @@ def choose_delay(now: datetime, randbelow=secrets.randbelow) -> int | None:
     return wait_to_start + randbelow(available + 1)
 
 
+def is_stale_run(started_at: datetime, resumed_at: datetime) -> bool:
+    """Reject only a delayed launcher that resumes on a later calendar day."""
+    return resumed_at.date() != started_at.date()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Run Morning Digest at a random time from 08:00 through 10:50")
@@ -35,18 +40,22 @@ def main() -> int:
     now = datetime.now().astimezone()
     delay = choose_delay(now)
     if delay is None:
-        print(f"Morning Digest skipped: random window already closed at {now.isoformat()}",
+        delay = 0
+        print(f"Morning Digest window missed; running immediately at {now.isoformat()}",
               flush=True)
-        return 0
-    target = datetime.fromtimestamp(now.timestamp() + delay, tz=now.tzinfo)
-    print(f"Morning Digest scheduled randomly for {target.isoformat()}", flush=True)
-    time.sleep(delay)
+    else:
+        target = datetime.fromtimestamp(now.timestamp() + delay, tz=now.tzinfo)
+        print(f"Morning Digest scheduled randomly for {target.isoformat()}", flush=True)
+        time.sleep(delay)
 
     current = datetime.now().astimezone()
-    if current.time().replace(tzinfo=None) > WINDOW_END:
-        print(f"Morning Digest skipped: Mac resumed after window at {current.isoformat()}",
+    if is_stale_run(now, current):
+        print(f"Morning Digest skipped: stale launcher resumed on {current.isoformat()}",
               flush=True)
         return 0
+    if current.time().replace(tzinfo=None) > WINDOW_END:
+        print(f"Morning Digest resumed after window; running immediately at {current.isoformat()}",
+              flush=True)
     return digest_main(["--config", args.config])
 
 

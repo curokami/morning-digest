@@ -14,7 +14,7 @@ from morning_digest.enrichment import ArticleEnricher
 from morning_digest.persistence import JsonStore
 from morning_digest.scheduling import select_rotating_feeds, source_is_due
 from morning_digest.taxonomy import Taxonomy
-from morning_digest.window_launcher import choose_delay
+from morning_digest.window_launcher import choose_delay, is_stale_run
 
 
 def result(url="https://example.com/a", priority=4):
@@ -165,6 +165,12 @@ def test_random_window_delay_stays_between_0800_and_1050():
     assert choose_delay(datetime(2026, 9, 17, 8, 0), lambda upper: upper - 1) == 10_200
     assert choose_delay(datetime(2026, 9, 17, 9, 30), lambda upper: upper - 1) == 4_800
     assert choose_delay(datetime(2026, 9, 17, 10, 51), lambda upper: 0) is None
+
+
+def test_random_window_runs_late_same_day_but_rejects_stale_next_day():
+    started = datetime(2026, 9, 23, 8, 0)
+    assert not is_stale_run(started, datetime(2026, 9, 23, 11, 50))
+    assert is_stale_run(started, datetime(2026, 9, 24, 7, 0))
 
 
 def test_collector_group_combines_sources_and_keeps_stronger_duplicate():

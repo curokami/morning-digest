@@ -5,8 +5,10 @@
 The production LaunchAgent starts `morning-digest-window` at 08:00 local time.
 The launcher chooses a uniformly random second from the remaining time through
 10:50 and waits before starting collection. If the Mac wakes after 08:00, the
-choice is bounded by the remaining window. If it wakes or resumes after 10:50,
-that day's run is skipped.
+choice is bounded by the remaining window. If it wakes or resumes after 10:50
+on the same day, collection starts immediately so the Digest is not lost. A
+launcher that resumes on a later calendar day is discarded to avoid duplicate
+or stale delivery.
 
 This removes the fixed daily request time without increasing request volume or
 retry counts. Randomization is an operational precaution, not a claim that
