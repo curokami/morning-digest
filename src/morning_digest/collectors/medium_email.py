@@ -34,6 +34,18 @@ def find_medium_daily_digest_files(email_paths: Iterable[Path]) -> list[Path]:
     ]
 
 
+def find_latest_medium_daily_digest_file(
+    email_paths: Iterable[Path],
+) -> Path | None:
+    """Return the most recently sent Medium Daily Digest EML file, if any."""
+    digest_files = find_medium_daily_digest_files(email_paths)
+    return max(
+        digest_files,
+        key=lambda email_path: read_email_metadata(email_path).sent_at,
+        default=None,
+    )
+
+
 def read_email_metadata(email_path: Path) -> EmailMetadata:
     """Read the identifying headers from an RFC 5322 email file."""
     with email_path.open("rb") as email_file:
