@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from email import policy
 from email.parser import BytesParser
@@ -20,6 +21,15 @@ def is_medium_daily_digest(metadata: EmailMetadata) -> bool:
         sender_name.strip().casefold() == "medium daily digest"
         and sender_address.casefold() == "noreply@medium.com"
     )
+
+
+def find_medium_daily_digest_files(email_paths: Iterable[Path]) -> list[Path]:
+    """Return EML files identified as Medium Daily Digest emails."""
+    return [
+        email_path
+        for email_path in email_paths
+        if is_medium_daily_digest(read_email_metadata(email_path))
+    ]
 
 
 def read_email_metadata(email_path: Path) -> EmailMetadata:
