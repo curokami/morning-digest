@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from email import policy
 from email.parser import BytesParser
+from email.utils import parseaddr
 from pathlib import Path
 
 
@@ -10,6 +11,15 @@ from pathlib import Path
 class EmailMetadata:
     subject: str
     sender: str
+
+
+def is_medium_daily_digest(metadata: EmailMetadata) -> bool:
+    """Return whether the sender identifies a Medium Daily Digest email."""
+    sender_name, sender_address = parseaddr(metadata.sender)
+    return (
+        sender_name.strip().casefold() == "medium daily digest"
+        and sender_address.casefold() == "noreply@medium.com"
+    )
 
 
 def read_email_metadata(email_path: Path) -> EmailMetadata:
