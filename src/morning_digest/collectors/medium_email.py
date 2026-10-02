@@ -2,9 +2,10 @@ from __future__ import annotations
 
 from collections.abc import Iterable
 from dataclasses import dataclass
+from datetime import datetime
 from email import policy
 from email.parser import BytesParser
-from email.utils import parseaddr
+from email.utils import parseaddr, parsedate_to_datetime
 from pathlib import Path
 
 
@@ -12,6 +13,7 @@ from pathlib import Path
 class EmailMetadata:
     subject: str
     sender: str
+    sent_at: datetime
 
 
 def is_medium_daily_digest(metadata: EmailMetadata) -> bool:
@@ -39,7 +41,15 @@ def read_email_metadata(email_path: Path) -> EmailMetadata:
 
     subject = message.get("Subject")
     sender = message.get("From")
-    if subject is None or sender is None:
-        raise ValueError("Email requires Subject and From headers")
+    date = message.get("Date")
+    if subject is None or sender is None or date is None:
+        raise ValueError("Email requires Subject, From, and Date headers")
 
-    return EmailMetadata(subject=str(subject), sender=str(sender))
+    try:
+        sent_at = parsedate_to_datetime(str(date))
+    except (TypeError, ValueError) as error:
+        raise ValueError("Email Date header must be valid") from error
+    if sent_at is None or sent_at.tzinfo is None:
+        raise ValueError("Email Date header must include a timezone")
+
+    return EmailMetadata(subject=str(subject), sender=str(sender), sent_at=sent_at)
