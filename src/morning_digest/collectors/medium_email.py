@@ -16,6 +16,12 @@ class EmailMetadata:
     sent_at: datetime
 
 
+@dataclass(frozen=True)
+class EmailBody:
+    content_type: str
+    content: str
+
+
 def is_medium_daily_digest(metadata: EmailMetadata) -> bool:
     """Return whether the sender identifies a Medium Daily Digest email."""
     sender_name, sender_address = parseaddr(metadata.sender)
@@ -44,6 +50,22 @@ def find_latest_medium_daily_digest_file(
         key=lambda email_path: read_email_metadata(email_path).sent_at,
         default=None,
     )
+
+
+def read_preferred_email_body(email_path: Path) -> EmailBody:
+    """Read an email's HTML body, falling back to its plain-text body."""
+    with email_path.open("rb") as email_file:
+        message = BytesParser(policy=policy.default).parse(email_file)
+
+    body_part = message.get_body(preferencelist=("html", "plain"))
+    if body_part is None:
+        raise ValueError("Email requires an HTML or plain-text body")
+
+    content = body_part.get_content()
+    if not isinstance(content, str):
+        raise ValueError("Email text body could not be decoded")
+
+    return EmailBody(content_type=body_part.get_content_type(), content=content)
 
 
 def read_email_metadata(email_path: Path) -> EmailMetadata:

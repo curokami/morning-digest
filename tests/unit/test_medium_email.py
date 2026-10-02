@@ -1,12 +1,15 @@
 from datetime import datetime
+from email.message import EmailMessage
 
 import pytest
 
 from morning_digest.collectors.medium_email import (
+    EmailBody,
     EmailMetadata,
     find_medium_daily_digest_files,
     find_latest_medium_daily_digest_file,
     is_medium_daily_digest,
+    read_preferred_email_body,
     read_email_metadata,
 )
 
@@ -164,3 +167,40 @@ def test_latest_medium_daily_digest_is_none_when_no_digest_exists(tmp_path):
     )
 
     assert find_latest_medium_daily_digest_file([unrelated_email]) is None
+
+
+def test_reads_html_body_from_multipart_alternative(tmp_path):
+    email_path = tmp_path / "html-digest.eml"
+    message = EmailMessage()
+    message.set_content("Plain recommendations")
+    message.add_alternative(
+        "<html><body><h1>Rich recommendations</h1></body></html>",
+        subtype="html",
+    )
+    email_path.write_bytes(message.as_bytes())
+
+    body = read_preferred_email_body(email_path)
+
+    assert body == EmailBody(
+        content_type="text/html",
+        content="<html><body><h1>Rich recommendations</h1></body></html>\n",
+    )
+
+
+def test_falls_back_to_plain_body_and_ignores_html_attachment(tmp_path):
+    email_path = tmp_path / "plain-digest.eml"
+    message = EmailMessage()
+    message.set_content("Plain recommendations")
+    message.add_attachment(
+        "<html><body>Attached document</body></html>",
+        subtype="html",
+        filename="attached.html",
+    )
+    email_path.write_bytes(message.as_bytes())
+
+    body = read_preferred_email_body(email_path)
+
+    assert body == EmailBody(
+        content_type="text/plain",
+        content="Plain recommendations\n",
+    )
