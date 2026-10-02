@@ -22,6 +22,13 @@ class EmailBody:
     content: str
 
 
+@dataclass(frozen=True)
+class MediumDailyDigestEmail:
+    source_path: Path
+    metadata: EmailMetadata
+    body: EmailBody
+
+
 def is_medium_daily_digest(metadata: EmailMetadata) -> bool:
     """Return whether the sender identifies a Medium Daily Digest email."""
     sender_name, sender_address = parseaddr(metadata.sender)
@@ -66,6 +73,21 @@ def read_preferred_email_body(email_path: Path) -> EmailBody:
         raise ValueError("Email text body could not be decoded")
 
     return EmailBody(content_type=body_part.get_content_type(), content=content)
+
+
+def read_latest_medium_daily_digest(
+    email_paths: Iterable[Path],
+) -> MediumDailyDigestEmail | None:
+    """Find and read the latest Medium Daily Digest EML file."""
+    source_path = find_latest_medium_daily_digest_file(email_paths)
+    if source_path is None:
+        return None
+
+    return MediumDailyDigestEmail(
+        source_path=source_path,
+        metadata=read_email_metadata(source_path),
+        body=read_preferred_email_body(source_path),
+    )
 
 
 def read_email_metadata(email_path: Path) -> EmailMetadata:

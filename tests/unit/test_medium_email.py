@@ -6,9 +6,11 @@ import pytest
 from morning_digest.collectors.medium_email import (
     EmailBody,
     EmailMetadata,
+    MediumDailyDigestEmail,
     find_medium_daily_digest_files,
     find_latest_medium_daily_digest_file,
     is_medium_daily_digest,
+    read_latest_medium_daily_digest,
     read_preferred_email_body,
     read_email_metadata,
 )
@@ -204,3 +206,41 @@ def test_falls_back_to_plain_body_and_ignores_html_attachment(tmp_path):
         content_type="text/plain",
         content="Plain recommendations\n",
     )
+
+
+def test_reads_latest_medium_daily_digest_with_metadata_and_html_body(tmp_path):
+    older_digest = tmp_path / "older-digest.eml"
+    latest_digest = tmp_path / "latest-digest.eml"
+    write_email(
+        older_digest,
+        "Medium Daily Digest <noreply@medium.com>",
+        "Older recommendations",
+        "Thu, 01 Oct 2026 07:30:00 +0900",
+    )
+    message = EmailMessage()
+    message["From"] = "Medium Daily Digest <noreply@medium.com>"
+    message["To"] = "reader@example.com"
+    message["Subject"] = "Latest recommendations"
+    message["Date"] = "Fri, 02 Oct 2026 07:30:00 +0900"
+    message.set_content("Plain recommendations")
+    message.add_alternative("<h1>Latest recommendations</h1>", subtype="html")
+    latest_digest.write_bytes(message.as_bytes())
+
+    digest = read_latest_medium_daily_digest([latest_digest, older_digest])
+
+    assert digest == MediumDailyDigestEmail(
+        source_path=latest_digest,
+        metadata=EmailMetadata(
+            subject="Latest recommendations",
+            sender="Medium Daily Digest <noreply@medium.com>",
+            sent_at=SENT_AT,
+        ),
+        body=EmailBody(
+            content_type="text/html",
+            content="<h1>Latest recommendations</h1>\n",
+        ),
+    )
+
+
+def test_read_latest_medium_daily_digest_is_none_when_no_digest_exists():
+    assert read_latest_medium_daily_digest([]) is None
