@@ -7,9 +7,11 @@ from morning_digest.collectors.medium_email import (
     EmailBody,
     EmailMetadata,
     MediumDailyDigestEmail,
+    ParsedEmail,
     find_medium_daily_digest_files,
     find_latest_medium_daily_digest_file,
     is_medium_daily_digest,
+    parse_email_message,
     read_latest_medium_daily_digest,
     read_preferred_email_body,
     read_email_metadata,
@@ -244,3 +246,27 @@ def test_reads_latest_medium_daily_digest_with_metadata_and_html_body(tmp_path):
 
 def test_read_latest_medium_daily_digest_is_none_when_no_digest_exists():
     assert read_latest_medium_daily_digest([]) is None
+
+
+def test_parses_rfc822_bytes_without_a_temporary_file():
+    message = EmailMessage()
+    message["From"] = "Medium Daily Digest <noreply@medium.com>"
+    message["To"] = "reader@example.com"
+    message["Subject"] = "Latest recommendations"
+    message["Date"] = "Fri, 02 Oct 2026 07:30:00 +0900"
+    message.set_content("Plain recommendations")
+    message.add_alternative("<h1>Latest recommendations</h1>", subtype="html")
+
+    parsed = parse_email_message(message.as_bytes())
+
+    assert parsed == ParsedEmail(
+        metadata=EmailMetadata(
+            subject="Latest recommendations",
+            sender="Medium Daily Digest <noreply@medium.com>",
+            sent_at=SENT_AT,
+        ),
+        body=EmailBody(
+            content_type="text/html",
+            content="<h1>Latest recommendations</h1>\n",
+        ),
+    )

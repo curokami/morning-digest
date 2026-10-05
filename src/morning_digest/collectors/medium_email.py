@@ -4,6 +4,7 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 from email import policy
+from email.message import EmailMessage
 from email.parser import BytesParser
 from email.utils import parseaddr, parsedate_to_datetime
 from pathlib import Path
@@ -20,6 +21,12 @@ class EmailMetadata:
 class EmailBody:
     content_type: str
     content: str
+
+
+@dataclass(frozen=True)
+class ParsedEmail:
+    metadata: EmailMetadata
+    body: EmailBody
 
 
 @dataclass(frozen=True)
@@ -64,6 +71,10 @@ def read_preferred_email_body(email_path: Path) -> EmailBody:
     with email_path.open("rb") as email_file:
         message = BytesParser(policy=policy.default).parse(email_file)
 
+    return _preferred_email_body(message)
+
+
+def _preferred_email_body(message: EmailMessage) -> EmailBody:
     body_part = message.get_body(preferencelist=("html", "plain"))
     if body_part is None:
         raise ValueError("Email requires an HTML or plain-text body")
@@ -73,6 +84,15 @@ def read_preferred_email_body(email_path: Path) -> EmailBody:
         raise ValueError("Email text body could not be decoded")
 
     return EmailBody(content_type=body_part.get_content_type(), content=content)
+
+
+def parse_email_message(raw_message: bytes) -> ParsedEmail:
+    """Parse RFC 822 bytes into normalized email metadata and content."""
+    message = BytesParser(policy=policy.default).parsebytes(raw_message)
+    return ParsedEmail(
+        metadata=_email_metadata(message),
+        body=_preferred_email_body(message),
+    )
 
 
 def read_latest_medium_daily_digest(
@@ -95,6 +115,10 @@ def read_email_metadata(email_path: Path) -> EmailMetadata:
     with email_path.open("rb") as email_file:
         message = BytesParser(policy=policy.default).parse(email_file, headersonly=True)
 
+    return _email_metadata(message)
+
+
+def _email_metadata(message: EmailMessage) -> EmailMetadata:
     subject = message.get("Subject")
     sender = message.get("From")
     date = message.get("Date")
