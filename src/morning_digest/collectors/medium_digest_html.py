@@ -65,10 +65,11 @@ def _is_medium_article_url(url: str) -> bool:
     parts = urlsplit(url)
     host = (parts.hostname or "").casefold()
     path_parts = parts.path.strip("/").split("/")
-    return (
-        (host == "medium.com" or host.endswith(".medium.com"))
-        and len(path_parts) >= 2
-    )
+    if host == "medium.com":
+        return len(path_parts) >= 2
+    if host.endswith(".medium.com") and host != "www.medium.com":
+        return bool(path_parts and path_parts[0])
+    return False
 
 
 def _without_tracking(url: str) -> str:
