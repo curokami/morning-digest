@@ -4,6 +4,12 @@ import imaplib
 from collections.abc import Callable
 from typing import Any
 
+from morning_digest.collectors.medium_email import (
+    ParsedEmail,
+    is_medium_daily_digest,
+    parse_email_message,
+)
+
 
 class GmailInboxError(RuntimeError):
     """Raised when Gmail cannot provide a requested inbox message."""
@@ -19,6 +25,23 @@ class GmailInboxReader:
         self.username = username
         self.app_password = app_password
         self.client_factory = client_factory
+
+    def read_latest_medium_daily_digest(self) -> ParsedEmail | None:
+        """Fetch, parse, and validate the latest Medium Daily Digest."""
+        raw_message = self.fetch_latest_medium_daily_digest()
+        if raw_message is None:
+            return None
+
+        try:
+            parsed_email = parse_email_message(raw_message)
+        except ValueError as error:
+            raise GmailInboxError("Gmail returned an unreadable email") from error
+
+        if not is_medium_daily_digest(parsed_email.metadata):
+            raise GmailInboxError(
+                "Gmail search returned an email from an unexpected sender"
+            )
+        return parsed_email
 
     def fetch_latest_medium_daily_digest(self) -> bytes | None:
         """Fetch the latest matching message without changing its read state."""
