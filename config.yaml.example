@@ -7,6 +7,9 @@ app:
 sources:
   medium:
     enabled: true
+    # Use "rss" for the legacy feed collector or "email" for Gmail's
+    # latest Medium Daily Digest. Email access is read-only.
+    acquisition: "rss"
     # Preferred feeds run daily; ordinary feeds are split across three days.
     polling:
       rotation_days: 3

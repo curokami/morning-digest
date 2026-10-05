@@ -2,11 +2,18 @@ from __future__ import annotations
 
 import argparse
 import logging
-from datetime import datetime
+from datetime import date, datetime
+from typing import Any
 from zoneinfo import ZoneInfo
 
 from morning_digest.ai import OpenAIProcessor
-from morning_digest.collectors import ElixirLibHuntCollector, MediumCollector, PythonWeeklyCollector
+from morning_digest.collectors import (
+    ElixirLibHuntCollector,
+    MediumCollector,
+    MediumEmailCollector,
+    PythonWeeklyCollector,
+)
+from morning_digest.collectors.gmail_inbox import GmailInboxReader
 from morning_digest.config import load_config
 from morning_digest.credentials import load_credentials
 from morning_digest.delivery import GmailDelivery
@@ -16,6 +23,28 @@ from morning_digest.persistence import JsonStore
 from morning_digest.pipeline import Pipeline
 from morning_digest.scheduling import select_rotating_feeds, source_is_due
 from morning_digest.taxonomy import Taxonomy
+
+
+def build_medium_collection(
+    medium: dict[str, Any],
+    credentials: dict[str, str],
+    today: date,
+):
+    """Build the configured Medium collector and the inputs it needs."""
+    acquisition = str(medium.get("acquisition", "rss")).casefold()
+    all_feeds = medium.get("feeds", [])
+    tag_weight_rules = medium.get("tag_weight_rules", [])
+
+    if acquisition == "rss":
+        rotation_days = int(medium.get("polling", {}).get("rotation_days", 3))
+        feeds = select_rotating_feeds(all_feeds, today, rotation_days)
+        return MediumCollector(tag_weight_rules), feeds
+    if acquisition == "email":
+        reader = GmailInboxReader(
+            credentials["GMAIL_USERNAME"], credentials["GMAIL_APP_PASSWORD"]
+        )
+        return MediumEmailCollector(reader, tag_weight_rules), all_feeds
+    raise ValueError("Medium acquisition must be 'rss' or 'email'")
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -51,13 +80,11 @@ def main(argv: list[str] | None = None) -> int:
 
     if medium.get("enabled", True):
         digest = medium.get("digest", {})
-        all_feeds = medium.get("feeds", [])
-        rotation_days = int(medium.get("polling", {}).get("rotation_days", 3))
-        feeds = select_rotating_feeds(all_feeds, now.date(), rotation_days)
+        collector, feeds = build_medium_collection(medium, credentials, now.date())
         logging.getLogger(__name__).info(
-            "Medium feeds selected: %d/%d rotation_days=%d",
-            len(feeds), len(all_feeds), rotation_days)
-        pipeline = Pipeline(MediumCollector(medium.get("tag_weight_rules", [])),
+            "Medium acquisition selected: mode=%s inputs=%d",
+            medium.get("acquisition", "rss"), len(feeds))
+        pipeline = Pipeline(collector,
             ArticleEnricher(), processor, store, builder, delivery)
         results.append(pipeline.run(
             feeds,
