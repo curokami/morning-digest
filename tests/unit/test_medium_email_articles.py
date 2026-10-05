@@ -125,3 +125,38 @@ def test_matches_author_feed_weight_for_medium_subdomain_article():
     articles = articles_from_medium_digest(digest, author_weights=weights)
 
     assert articles[0].preference_weight == 2.0
+
+
+def test_applies_all_matching_text_rules_to_title_and_summary():
+    digest = ParsedEmail(
+        metadata=EmailMetadata(
+            subject="Today's Medium Daily Digest",
+            sender="Medium Daily Digest <noreply@medium.com>",
+            sent_at=datetime(2026, 10, 5, 7, 20, tzinfo=timezone.utc),
+        ),
+        body=EmailBody(
+            content_type="text/html",
+            content="""
+            <a href="https://medium.com/@favorite">Favorite Writer</a>
+            <a href="https://medium.com/@favorite/elixir-programming-123456789abc">
+              <h2>Elixir in Practice</h2>
+              <h3>A programming guide using Python for comparison.</h3>
+            </a>
+            """,
+        ),
+    )
+    weights = medium_author_weights([
+        {"url": "https://medium.com/feed/@favorite", "weight": 2.0},
+    ])
+
+    articles = articles_from_medium_digest(
+        digest,
+        author_weights=weights,
+        text_weight_rules=[
+            {"all": ["Elixir", "Programming"], "weight": 2.0},
+            {"all": ["PYTHON"], "weight": 1.5},
+            {"all": ["htmx"], "weight": 3.0},
+        ],
+    )
+
+    assert articles[0].preference_weight == 6.0
