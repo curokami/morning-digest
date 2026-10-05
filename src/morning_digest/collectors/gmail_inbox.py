@@ -56,9 +56,11 @@ class GmailInboxReader:
             status, search_data = client.uid(
                 "search",
                 None,
+                "FROM",
+                '"noreply@medium.com"',
                 "HEADER",
                 "FROM",
-                '"Medium Daily Digest <noreply@medium.com>"',
+                '"Medium Daily Digest"',
             )
             self._require_ok(status, "search for Medium Daily Digest")
             message_uids = search_data[0].split() if search_data else []

@@ -61,9 +61,11 @@ def test_fetches_latest_medium_daily_digest_without_marking_it_read():
         "uid",
         "search",
         None,
+        "FROM",
+        '"noreply@medium.com"',
         "HEADER",
         "FROM",
-        '"Medium Daily Digest <noreply@medium.com>"',
+        '"Medium Daily Digest"',
     ) in client.calls
     assert ("uid", "fetch", b"205", "(BODY.PEEK[])") in client.calls
     assert client.calls[-1] == ("logout",)
