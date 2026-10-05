@@ -16,20 +16,35 @@ class MediumDigestArticleCandidate:
 
 def extract_first_article(html: str) -> MediumDigestArticleCandidate | None:
     """Extract the first article card from a Medium Daily Digest HTML body."""
-    document = BeautifulSoup(html, "html.parser")
-    for heading in document.find_all("h2"):
-        article_link = heading.find_parent("a", href=True)
-        if article_link is None or not _is_medium_article_url(article_link["href"]):
-            continue
+    return next(iter(extract_articles(html)), None)
 
-        summary_heading = article_link.find("h3")
-        return MediumDigestArticleCandidate(
-            title=_normalized_text(heading),
-            canonical_url=_without_tracking(article_link["href"]),
-            author=_find_author(heading, article_link["href"]),
-            summary=_normalized_text(summary_heading) if summary_heading else "",
-        )
-    return None
+
+def extract_articles(html: str) -> list[MediumDigestArticleCandidate]:
+    """Extract unique article cards in their Medium Daily Digest order."""
+    document = BeautifulSoup(html, "html.parser")
+    candidates: list[MediumDigestArticleCandidate] = []
+    seen_urls: set[str] = set()
+    for heading in document.find_all("h2"):
+        candidate = _article_candidate(heading)
+        if candidate is None or candidate.canonical_url in seen_urls:
+            continue
+        seen_urls.add(candidate.canonical_url)
+        candidates.append(candidate)
+    return candidates
+
+
+def _article_candidate(heading) -> MediumDigestArticleCandidate | None:
+    article_link = heading.find_parent("a", href=True)
+    if article_link is None or not _is_medium_article_url(article_link["href"]):
+        return None
+
+    summary_heading = article_link.find("h3")
+    return MediumDigestArticleCandidate(
+        title=_normalized_text(heading),
+        canonical_url=_without_tracking(article_link["href"]),
+        author=_find_author(heading, article_link["href"]),
+        summary=_normalized_text(summary_heading) if summary_heading else "",
+    )
 
 
 def _find_author(heading, article_url: str) -> str | None:
