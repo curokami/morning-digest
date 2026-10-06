@@ -1,7 +1,8 @@
 from datetime import date
 
-from morning_digest.cli import build_medium_collection
+from morning_digest.cli import build_medium_collection, build_medium_enricher
 from morning_digest.collectors import MediumCollector, MediumEmailCollector
+from morning_digest.enrichment import ArticleEnricher, ExistingContentEnricher
 
 
 def test_builds_rss_collection_by_default_with_rotated_feeds():
@@ -52,3 +53,14 @@ def test_rejects_unknown_medium_acquisition_mode():
         assert str(error) == "Medium acquisition must be 'rss' or 'email'"
     else:
         raise AssertionError("Expected an unknown acquisition mode to be rejected")
+
+
+def test_uses_existing_email_content_without_web_enrichment():
+    assert isinstance(
+        build_medium_enricher({"acquisition": "email"}),
+        ExistingContentEnricher,
+    )
+
+
+def test_keeps_web_enrichment_for_rss_mode():
+    assert isinstance(build_medium_enricher({}), ArticleEnricher)

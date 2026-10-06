@@ -18,7 +18,7 @@ from morning_digest.config import load_config
 from morning_digest.credentials import load_credentials
 from morning_digest.delivery import GmailDelivery
 from morning_digest.digest import HtmlDigestBuilder
-from morning_digest.enrichment import ArticleEnricher
+from morning_digest.enrichment import ArticleEnricher, ExistingContentEnricher
 from morning_digest.persistence import JsonStore
 from morning_digest.pipeline import Pipeline
 from morning_digest.scheduling import select_rotating_feeds, source_is_due
@@ -44,6 +44,16 @@ def build_medium_collection(
             credentials["GMAIL_USERNAME"], credentials["GMAIL_APP_PASSWORD"]
         )
         return MediumEmailCollector(reader, tag_weight_rules), all_feeds
+    raise ValueError("Medium acquisition must be 'rss' or 'email'")
+
+
+def build_medium_enricher(medium: dict[str, Any]):
+    """Choose enrichment without bypassing the configured acquisition boundary."""
+    acquisition = str(medium.get("acquisition", "rss")).casefold()
+    if acquisition == "rss":
+        return ArticleEnricher()
+    if acquisition == "email":
+        return ExistingContentEnricher()
     raise ValueError("Medium acquisition must be 'rss' or 'email'")
 
 
@@ -81,11 +91,11 @@ def main(argv: list[str] | None = None) -> int:
     if medium.get("enabled", True):
         digest = medium.get("digest", {})
         collector, feeds = build_medium_collection(medium, credentials, now.date())
+        enricher = build_medium_enricher(medium)
         logging.getLogger(__name__).info(
             "Medium acquisition selected: mode=%s inputs=%d",
             medium.get("acquisition", "rss"), len(feeds))
-        pipeline = Pipeline(collector,
-            ArticleEnricher(), processor, store, builder, delivery)
+        pipeline = Pipeline(collector, enricher, processor, store, builder, delivery)
         results.append(pipeline.run(
             feeds,
             int(digest.get("max_articles", app_config.get("max_articles_per_digest", 10))),
