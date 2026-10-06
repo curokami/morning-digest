@@ -86,6 +86,35 @@ def test_pipeline_selects_higher_weight_before_article_limit(tmp_path):
     assert processor.titles == ["favorite"]
 
 
+def test_pipeline_excludes_articles_at_or_below_minimum_weight(tmp_path):
+    class WeightedCollector:
+        def collect(self, feeds):
+            return [
+                Article("downranked", "https://e/downranked", "Medium",
+                        preference_weight=0.5),
+                Article("normal", "https://e/normal", "Medium",
+                        preference_weight=1.0),
+                Article("preferred", "https://e/preferred", "Medium",
+                        preference_weight=1.1),
+            ]
+
+    class TrackingProcessor(Processor):
+        def __init__(self): self.titles = []
+
+        def process(self, article):
+            self.titles.append(article.title)
+            return super().process(article)
+
+    processor = TrackingProcessor()
+    pipeline = Pipeline(WeightedCollector(), Enricher(), processor,
+        JsonStore(tmp_path / "state.json"), HtmlDigestBuilder(), Delivery())
+
+    outcome = pipeline.run(["feed"], minimum_preference_weight=1.0)
+
+    assert processor.titles == ["preferred"]
+    assert outcome["candidates"] == 1
+
+
 def test_separate_source_runs_send_separate_digests(tmp_path):
     class SourceCollector:
         def __init__(self, source): self.source = source

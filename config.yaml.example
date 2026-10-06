@@ -31,6 +31,8 @@ sources:
         weight: 2.0
     digest:
       max_articles: 10
+      # Include only articles whose final weight is strictly greater than this.
+      minimum_preference_weight: 0.0
       subject_prefix: "Morning Digest"
   python_weekly:
     enabled: true

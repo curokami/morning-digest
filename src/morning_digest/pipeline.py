@@ -13,9 +13,16 @@ class Pipeline:
         self.logger = logger or logging.getLogger(__name__)
 
     def run(self, feeds: list[str | dict], max_articles: int = 10,
-            subject_prefix: str = "Morning Digest", delivery_source: str | None = None) -> dict:
+            subject_prefix: str = "Morning Digest", delivery_source: str | None = None,
+            minimum_preference_weight: float = 0.0) -> dict:
+        if minimum_preference_weight < 0:
+            raise ValueError("Minimum preference weight must not be negative")
         self.logger.info("Digest run started: source=%s", delivery_source or "all")
-        candidates = [a for a in self.collector.collect(feeds) if self.store.should_process(a.canonical_url)]
+        candidates = [
+            article for article in self.collector.collect(feeds)
+            if article.preference_weight > minimum_preference_weight
+            and self.store.should_process(article.canonical_url)
+        ]
         articles = sorted(candidates, key=lambda article: article.preference_weight, reverse=True)[:max_articles]
         succeeded = 0
         total = len(articles)

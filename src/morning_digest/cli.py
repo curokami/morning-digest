@@ -101,6 +101,9 @@ def main(argv: list[str] | None = None) -> int:
             int(digest.get("max_articles", app_config.get("max_articles_per_digest", 10))),
             digest.get("subject_prefix", default_subject),
             delivery_source="Medium",
+            minimum_preference_weight=float(
+                digest.get("minimum_preference_weight", 0.0)
+            ),
         ))
 
     if python_weekly.get("enabled", False) and source_is_due(python_weekly.get("schedule"), now):
