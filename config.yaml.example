@@ -25,6 +25,10 @@ sources:
         daily: true
     # A rule applies only when every listed RSS source tag is present.
     tag_weight_rules:
+      - all: ["Apple"]
+        weight: 2.0
+      - all: ["Cloudflare"]
+        weight: 2.0
       - all: ["Elixir", "Programming"]
         weight: 2.0
       - all: ["Omarchy"]
