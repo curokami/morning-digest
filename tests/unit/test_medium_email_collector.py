@@ -34,6 +34,7 @@ def test_collects_weighted_articles_from_latest_medium_digest_email():
     collector = MediumEmailCollector(
         reader,
         text_weight_rules=[{"all": ["Python"], "weight": 2.0}],
+        clap_weight_rules=[{"minimum": 50, "weight": 1.1}],
     )
 
     articles = collector.collect([
@@ -44,6 +45,7 @@ def test_collects_weighted_articles_from_latest_medium_digest_email():
     assert len(articles) == 1
     assert articles[0].title == "Python Tools"
     assert articles[0].preference_weight == 4.0
+    assert collector.clap_weight_rules == [{"minimum": 50, "weight": 1.1}]
 
 
 def test_collects_nothing_when_inbox_has_no_medium_digest():

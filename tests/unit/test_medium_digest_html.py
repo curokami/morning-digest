@@ -76,3 +76,20 @@ def test_extracts_all_articles_in_order_and_removes_duplicate_urls():
             summary="Second summary.",
         ),
     ]
+
+
+def test_extracts_clap_count_and_expands_abbreviated_values():
+    html = """
+    <div class="article-card">
+      <a href="https://medium.com/@alice">Alice Example</a>
+      <a href="https://medium.com/@alice/popular-story-123456789abc">
+        <h2>Popular Story</h2><h3>A popular summary.</h3>
+      </a>
+      <span><img alt="Claps" src="claps.png">1.3K</span>
+      <span><img alt="Responses" src="responses.png">56</span>
+    </div>
+    """
+
+    candidate = extract_first_article(html)
+
+    assert candidate.clap_count == 1300

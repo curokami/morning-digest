@@ -43,7 +43,11 @@ def build_medium_collection(
         reader = GmailInboxReader(
             credentials["GMAIL_USERNAME"], credentials["GMAIL_APP_PASSWORD"]
         )
-        return MediumEmailCollector(reader, tag_weight_rules), all_feeds
+        return MediumEmailCollector(
+            reader,
+            tag_weight_rules,
+            medium.get("clap_weight_rules", []),
+        ), all_feeds
     raise ValueError("Medium acquisition must be 'rss' or 'email'")
 
 

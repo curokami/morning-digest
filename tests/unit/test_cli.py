@@ -26,6 +26,7 @@ def test_builds_email_collection_with_all_feeds_for_author_weights():
     medium = {
         "acquisition": "email",
         "tag_weight_rules": [{"all": ["Python"], "weight": 2.0}],
+        "clap_weight_rules": [{"minimum": 200, "weight": 1.2}],
         "feeds": [
             "https://medium.com/feed/@one",
             {"url": "https://medium.com/feed/@favorite", "weight": 2.0},
@@ -44,6 +45,7 @@ def test_builds_email_collection_with_all_feeds_for_author_weights():
     assert feeds == medium["feeds"]
     assert collector.inbox_reader.username == "reader@example.com"
     assert collector.text_weight_rules == medium["tag_weight_rules"]
+    assert collector.clap_weight_rules == medium["clap_weight_rules"]
 
 
 def test_rejects_unknown_medium_acquisition_mode():

@@ -33,6 +33,14 @@ sources:
         weight: 2.0
       - all: ["Omarchy"]
         weight: 2.0
+    # Popularity only boosts articles already preferred by author or topic.
+    clap_weight_rules:
+      - minimum: 50
+        weight: 1.1
+      - minimum: 200
+        weight: 1.2
+      - minimum: 1000
+        weight: 1.3
     digest:
       max_articles: 10
       # Include only articles whose final weight is strictly greater than this.

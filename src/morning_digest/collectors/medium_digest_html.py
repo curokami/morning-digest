@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from urllib.parse import urlsplit, urlunsplit
 
@@ -12,6 +13,7 @@ class MediumDigestArticleCandidate:
     canonical_url: str
     author: str | None
     summary: str
+    clap_count: int | None = None
 
 
 def extract_first_article(html: str) -> MediumDigestArticleCandidate | None:
@@ -44,7 +46,41 @@ def _article_candidate(heading) -> MediumDigestArticleCandidate | None:
         canonical_url=_without_tracking(article_link["href"]),
         author=_find_author(heading, article_link["href"]),
         summary=_normalized_text(summary_heading) if summary_heading else "",
+        clap_count=_find_clap_count(heading),
     )
+
+
+def _find_clap_count(heading) -> int | None:
+    for container in heading.parents:
+        icon = container.find(
+            "img",
+            alt=lambda value: isinstance(value, str) and value.casefold() == "claps",
+        )
+        if icon is not None:
+            return _metric_after_icon(icon)
+    return None
+
+
+def _metric_after_icon(icon) -> int | None:
+    for element in icon.next_elements:
+        if getattr(element, "name", None) == "img":
+            alt = element.get("alt", "")
+            if isinstance(alt, str) and alt.casefold() == "responses":
+                return None
+        if isinstance(element, str):
+            parsed = _parse_abbreviated_count(element)
+            if parsed is not None:
+                return parsed
+    return None
+
+
+def _parse_abbreviated_count(value: str) -> int | None:
+    match = re.fullmatch(r"\s*([\d,]+(?:\.\d+)?)\s*([kKmM]?)\s*", value)
+    if match is None:
+        return None
+    number = float(match.group(1).replace(",", ""))
+    scale = {"": 1, "k": 1_000, "m": 1_000_000}[match.group(2).casefold()]
+    return int(number * scale)
 
 
 def _find_author(heading, article_url: str) -> str | None:

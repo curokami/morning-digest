@@ -29,6 +29,7 @@ def articles_from_medium_digest(
     digest: ParsedEmail,
     author_weights: Mapping[str, float] | None = None,
     text_weight_rules: Iterable[dict] | None = None,
+    clap_weight_rules: Iterable[dict] | None = None,
 ) -> list[Article]:
     """Convert a parsed Medium Daily Digest email into domain articles."""
     if digest.body.content_type != "text/html":
@@ -36,22 +37,43 @@ def articles_from_medium_digest(
 
     publication_date = digest.metadata.sent_at.isoformat()
     validated_text_rules = _validate_text_weight_rules(text_weight_rules or [])
+    validated_clap_rules = _validate_clap_weight_rules(clap_weight_rules or [])
     return [
-        Article(
-            title=candidate.title,
-            canonical_url=candidate.canonical_url,
-            source="Medium",
-            author=candidate.author,
-            publication_date=publication_date,
-            content=candidate.summary,
-            preference_weight=_article_author_weight(
-                candidate.canonical_url, author_weights or {}
-            ) * _article_text_weight(
-                candidate.title, candidate.summary, validated_text_rules
-            ),
+        _article_from_candidate(
+            candidate,
+            publication_date,
+            author_weights or {},
+            validated_text_rules,
+            validated_clap_rules,
         )
         for candidate in extract_articles(digest.body.content)
     ]
+
+
+def _article_from_candidate(
+    candidate,
+    publication_date: str,
+    author_weights: Mapping[str, float],
+    text_rules: tuple[tuple[frozenset[str], float], ...],
+    clap_rules: tuple[tuple[int, float], ...],
+) -> Article:
+    interest_weight = _article_author_weight(
+        candidate.canonical_url, author_weights
+    ) * _article_text_weight(candidate.title, candidate.summary, text_rules)
+    clap_weight = (
+        _article_clap_weight(candidate.clap_count, clap_rules)
+        if interest_weight > 1.0
+        else 1.0
+    )
+    return Article(
+        title=candidate.title,
+        canonical_url=candidate.canonical_url,
+        source="Medium",
+        author=candidate.author,
+        publication_date=publication_date,
+        content=candidate.summary,
+        preference_weight=interest_weight * clap_weight,
+    )
 
 
 def _validate_text_weight_rules(
@@ -82,6 +104,31 @@ def _article_text_weight(
         if all(term in searchable_text for term in required):
             multiplier *= weight
     return multiplier
+
+
+def _validate_clap_weight_rules(
+    rules: Iterable[dict],
+) -> tuple[tuple[int, float], ...]:
+    validated: list[tuple[int, float]] = []
+    for rule in rules:
+        if not isinstance(rule, dict) or "minimum" not in rule:
+            raise ValueError("Each clap weight rule must contain a minimum")
+        minimum = int(rule["minimum"])
+        weight = float(rule.get("weight", 1.0))
+        if minimum < 0 or weight <= 0:
+            raise ValueError("Clap weight rules require a non-negative minimum and positive weight")
+        validated.append((minimum, weight))
+    return tuple(validated)
+
+
+def _article_clap_weight(
+    clap_count: int | None,
+    rules: tuple[tuple[int, float], ...],
+) -> float:
+    if clap_count is None:
+        return 1.0
+    matches = [(minimum, weight) for minimum, weight in rules if clap_count >= minimum]
+    return max(matches, default=(0, 1.0), key=lambda rule: rule[0])[1]
 
 
 def _article_author_weight(article_url: str, author_weights: Mapping[str, float]) -> float:

@@ -1,5 +1,7 @@
 from datetime import datetime, timezone
 
+import pytest
+
 from morning_digest.collectors.medium_email import EmailBody, EmailMetadata, ParsedEmail
 from morning_digest.collectors.medium_email_articles import (
     articles_from_medium_digest,
@@ -160,3 +162,46 @@ def test_applies_all_matching_text_rules_to_title_and_summary():
     )
 
     assert articles[0].preference_weight == 6.0
+
+
+def test_applies_clap_weight_only_to_articles_with_reader_interest():
+    digest = ParsedEmail(
+        metadata=EmailMetadata(
+            subject="Today's Medium Daily Digest",
+            sender="Medium Daily Digest <noreply@medium.com>",
+            sent_at=datetime(2026, 10, 5, 7, 20, tzinfo=timezone.utc),
+        ),
+        body=EmailBody(
+            content_type="text/html",
+            content="""
+            <div>
+              <a href="https://medium.com/@alice">Alice Example</a>
+              <a href="https://medium.com/@alice/python-story-123456789abc">
+                <h2>Python Story</h2><h3>A Python summary.</h3>
+              </a>
+              <span><img alt="Claps">926</span><span><img alt="Responses">40</span>
+            </div>
+            <div>
+              <a href="https://medium.com/@bob">Bob Example</a>
+              <a href="https://medium.com/@bob/popular-story-abcdef123456">
+                <h2>Popular but Unrelated</h2><h3>An unrelated summary.</h3>
+              </a>
+              <span><img alt="Claps">1.3K</span><span><img alt="Responses">56</span>
+            </div>
+            """,
+        ),
+    )
+    clap_rules = [
+        {"minimum": 50, "weight": 1.1},
+        {"minimum": 200, "weight": 1.2},
+        {"minimum": 1000, "weight": 1.3},
+    ]
+
+    articles = articles_from_medium_digest(
+        digest,
+        text_weight_rules=[{"all": ["Python"], "weight": 2.0}],
+        clap_weight_rules=clap_rules,
+    )
+
+    assert articles[0].preference_weight == pytest.approx(2.4)
+    assert articles[1].preference_weight == 1.0
